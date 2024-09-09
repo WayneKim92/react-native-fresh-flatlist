@@ -1,36 +1,38 @@
 import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import FreshFlatList, {
-  type FetchMeta,
-  type FetchType,
+  type FetchInputMeta,
+  type FetchOutputMeta,
 } from 'react-native-fresh-flatlist';
 import config from './ignore/config.json';
 import { type Board } from './ignore/types';
 
 export default function App() {
   // 네트워크 로직은 어떻게 입력할 것인가?
-  const fetchList = async ({ fetchType, fetchPage }: FetchMeta) => {
-    let page = 1;
-    if (fetchType === 'first') {
-      page = 1;
-    }
-    if (fetchType === 'next') {
-      page = fetchPage + 1;
-    }
+  const fetchList = async (
+    fetchInputMeta: FetchInputMeta
+  ): FetchOutputMeta<Board> => {
+    const { fetchType, fetchPage = 1 } = fetchInputMeta;
+    console.log('fetchList', { fetchType, fetchPage });
 
     const response = await fetch(
-      `${config.api}boards?contentType=BOARD&ownerId=3&category=ALL&page=${page}&size=60&sort=createdAt`
+      `${config.api}boards?contentType=BOARD&ownerId=3&category=ALL&page=${fetchPage}&size=30&sort=createdAt`
     );
 
     const data = await response.json();
 
-    let list = null;
+    let list: Board[] = [];
     if (data && data.boardList) {
       list = data.boardList;
+      console.log('data 있음', list.length);
+    } else {
+      console.log('data 없음', list.length);
     }
 
     return {
-      fetchType: 'current' as FetchType,
+      fetchType: 'current',
       list: list as Board[],
+      // isFirstPage: data.isFirst,
+      isLastPage: data.isLast,
     };
   };
 
@@ -41,7 +43,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <FreshFlatList<Board>
         fetchList={fetchList}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           return (
             <View style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}>
               <View style={{ flexDirection: 'row' }}>
@@ -61,7 +63,10 @@ export default function App() {
                   justifyContent: 'space-between',
                 }}
               >
-                <Text>{item.content}</Text>
+                <View>
+                  <Text style={{ fontWeight: 'bold' }}>index : {index}</Text>
+                  <Text>{item.content}</Text>
+                </View>
 
                 {item.imageList && item.imageList.length > 0 && (
                   <Image

@@ -8,6 +8,9 @@ import { useEffect, useRef, useState } from 'react';
 // fetchList: (currentPage) => Promise<number>;
 // initData: 초기에 fetch 없이 list를 보여주고 싶을 때
 
+// RN 타입 중 export 안 되어 있는 타입만 여기에 나열하자
+type onEndReachedParam = { distanceFromEnd: number };
+
 /**
  * FreshTrigger
  * - general: 일반적인 상황에서 fetch를 호출한다.
@@ -15,62 +18,59 @@ import { useEffect, useRef, useState } from 'react';
  */
 type FreshTrigger = 'general' | 'viewed-page' | string;
 export type FetchType = 'first' | 'previous' | 'current' | 'next';
-export type FetchMeta = {
+export type FetchInputMeta = {
   fetchType: FetchType;
   fetchPage: number;
 };
+export type FetchOutputMeta<T> = Promise<{
+  fetchType: FetchType;
+  list: T[];
+  isLastPage: boolean;
+}>;
 interface FreshFlatListProps<T> extends Omit<FlatListProps<T>, 'data'> {
   freshTriggers?: FreshTrigger[];
   isFocused?: boolean;
-  fetchList: ({ fetchPage, fetchType }: FetchMeta) => Promise<{
-    fetchType: FetchType;
-    list: T[];
-  }>;
+  fetchList: ({ fetchPage, fetchType }: FetchInputMeta) => FetchOutputMeta<T>;
 }
 
 const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
   const { renderItem, fetchList, ...otherProps } = props;
 
   const [data, setData] = useState<T[]>([]);
-  const [currentFetchType] = useState<FetchType>('first');
+  const currentFetchTypeRef = useRef<FetchType>('first');
   const currentPageRef = useRef(1);
 
+  // initial fetch
   useEffect(() => {
     (async () => {
-      console.log('fetch 전', {
-        currentPage: currentPageRef.current,
-        currentFetchType,
-      });
-      const { list, fetchType } = await fetchList({
+      console.log('initial fetch');
+      const { list } = await fetchList({
         fetchPage: currentPageRef.current,
-        fetchType: currentFetchType,
+        fetchType: currentFetchTypeRef.current,
       });
-
-      console.log('fetch 후', {
-        currentPage: currentPageRef.current,
-        fetchType,
-        listLength: list.length,
-      });
-      setData(list);
+      setData((prevState) => [...prevState, ...list]);
     })();
-  }, [currentFetchType, fetchList]);
+  }, [fetchList]);
 
-  console.log('렌더링 in FreshFlatList.tsx');
+  const handleOnEndReached = async ({ distanceFromEnd }: onEndReachedParam) => {
+    if (distanceFromEnd === 0) {
+      return;
+    }
+    console.log('onEndReached');
+    currentPageRef.current += 1;
+    const { list } = await fetchList({
+      fetchType: 'next',
+      fetchPage: currentPageRef.current,
+    });
+    setData((prevState) => [...prevState, ...list]);
+  };
 
   return (
     <FlatList<T>
       data={data}
       renderItem={renderItem}
-      onViewableItemsChanged={(_info) => {
-        console.log('onViewableItemsChanged');
-      }}
       onEndReachedThreshold={0.5}
-      onEndReached={({ distanceFromEnd }) => {
-        if (distanceFromEnd === 0) {
-          return;
-        }
-        console.log('onEndReached');
-      }}
+      onEndReached={handleOnEndReached}
       contentContainerStyle={{ flexGrow: 1 }}
       {...otherProps}
     />
