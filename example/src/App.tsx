@@ -5,17 +5,22 @@ import FreshFlatList, {
 } from 'react-native-fresh-flatlist';
 import config from './ignore/config.json';
 import { type Board } from './ignore/types';
+import { useEffect, useState } from 'react';
+import TestInputText from './TestInputText';
 
 export default function App() {
+  const [category, setCategory] = useState('ALL');
+  const [size, setSize] = useState(60);
+  const [ownerId, setOwnerId] = useState(4);
+
   // 네트워크 로직은 어떻게 입력할 것인가?
   const fetchList = async (
     fetchInputMeta: FetchInputMeta
   ): FetchOutputMeta<Board> => {
-    const { fetchType, fetchPage = 1 } = fetchInputMeta;
-    console.log('fetchList', { fetchType, fetchPage });
+    const { fetchPage = 1 } = fetchInputMeta;
 
     const response = await fetch(
-      `${config.api}boards?contentType=BOARD&ownerId=3&category=ALL&page=${fetchPage}&size=30&sort=createdAt`
+      `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
     );
 
     const data = await response.json();
@@ -29,18 +34,38 @@ export default function App() {
     }
 
     return {
-      fetchType: 'current',
+      // fetchType: 'current',
       list: list as Board[],
       // isFirstPage: data.isFirst,
       isLastPage: data.isLast,
     };
   };
 
-  console.log('렌더링 in App.tsx');
+  useEffect(() => {}, []);
 
   return (
     // 외부에서 처리할 연산, 내부에서 처리할 연산을 어떻게 구분하는 게 좋을까?
     <SafeAreaView style={styles.container}>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+        <TestInputText
+          label={'Owner Id'}
+          value={ownerId.toString()}
+          onChangeValue={(value) => setOwnerId(Number(value))}
+          placeholder={'Order Id'}
+        />
+        <TestInputText
+          label={'카테고리'}
+          value={'ALL'}
+          onChangeValue={setCategory}
+          placeholder={'카테고리'}
+        />
+        <TestInputText
+          label={'Size '}
+          value={size.toString()}
+          onChangeValue={(value) => setSize(Number(value))}
+          placeholder={'개수'}
+        />
+      </View>
       <FreshFlatList<Board>
         fetchList={fetchList}
         renderItem={({ item, index }) => {

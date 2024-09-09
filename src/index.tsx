@@ -19,25 +19,24 @@ type onEndReachedParam = { distanceFromEnd: number };
 type FreshTrigger = 'general' | 'viewed-page' | string;
 export type FetchType = 'first' | 'previous' | 'current' | 'next';
 export type FetchInputMeta = {
-  fetchType: FetchType;
+  // fetchType: FetchType;
   fetchPage: number;
 };
 export type FetchOutputMeta<T> = Promise<{
-  fetchType: FetchType;
+  // fetchType: FetchType;
   list: T[];
   isLastPage: boolean;
 }>;
 interface FreshFlatListProps<T> extends Omit<FlatListProps<T>, 'data'> {
   freshTriggers?: FreshTrigger[];
   isFocused?: boolean;
-  fetchList: ({ fetchPage, fetchType }: FetchInputMeta) => FetchOutputMeta<T>;
+  fetchList: (fetchInputMeta: FetchInputMeta) => FetchOutputMeta<T>;
 }
 
 const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
   const { renderItem, fetchList, ...otherProps } = props;
 
   const [data, setData] = useState<T[]>([]);
-  const currentFetchTypeRef = useRef<FetchType>('first');
   const currentPageRef = useRef(1);
 
   // initial fetch
@@ -46,12 +45,13 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
       console.log('initial fetch');
       const { list } = await fetchList({
         fetchPage: currentPageRef.current,
-        fetchType: currentFetchTypeRef.current,
+        // fetchType: currentFetchTypeRef.current,
       });
       setData((prevState) => [...prevState, ...list]);
     })();
   }, [fetchList]);
 
+  // fetch when end reached
   const handleOnEndReached = async ({ distanceFromEnd }: onEndReachedParam) => {
     if (distanceFromEnd === 0) {
       return;
@@ -59,7 +59,6 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
     console.log('onEndReached');
     currentPageRef.current += 1;
     const { list } = await fetchList({
-      fetchType: 'next',
       fetchPage: currentPageRef.current,
     });
     setData((prevState) => [...prevState, ...list]);
