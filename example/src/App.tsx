@@ -4,8 +4,8 @@ import FreshFlatList from 'react-native-fresh-flatlist'; // 경로를 실제 파
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
-      <FreshFlatList<{ a: number; b: number }>
-        initData={[1, 2, 3, 4, 5]}
+      <FreshFlatList<{ a?: number; b?: number }>
+        initData={[{ a: 1 }, { b: 2 }]}
         renderItem={({ item }) => {
           console.log(item);
           return <View style={styles.box} />;
