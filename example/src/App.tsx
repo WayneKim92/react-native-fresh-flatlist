@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-fresh-flatlist';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
+import FreshFlatList from 'react-native-fresh-flatlist'; // 경로를 실제 파일 경로로 수정하세요
 
 export default function App() {
-  const [result, setResult] = useState<number | undefined>();
-
-  useEffect(() => {
-    multiply(3, 7).then(setResult);
-  }, []);
-
   return (
-    <View style={styles.container}>
-      <Text>Result: {result}</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <FreshFlatList<{ a: number; b: number }>
+        initData={[1, 2, 3, 4, 5]}
+        renderItem={({ item }) => {
+          console.log(item);
+          return <View style={styles.box} />;
+        }}
+      />
+    </SafeAreaView>
   );
 }
 
@@ -23,8 +22,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   box: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     marginVertical: 20,
+    backgroundColor: 'red',
   },
 });
