@@ -18,9 +18,6 @@ export default function ListScreen() {
   const devLog = useDevLog(__DEV__);
 
   useEffect(() => {
-    console.log('####################################');
-    console.log(freshFlatListRef.current);
-    console.log('####################################');
     freshFlatListRef.current?.reset();
   }, [ownerId]);
 
