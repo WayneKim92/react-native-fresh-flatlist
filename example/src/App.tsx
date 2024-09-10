@@ -1,3 +1,4 @@
+import 'abortcontroller-polyfill/dist/polyfill-patch-fetch';
 import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import FreshFlatList, {
   type FreshFlatListRef,
@@ -8,6 +9,25 @@ import { useEffect, useRef, useState } from 'react';
 import TestInputText from './TestInputText';
 import { useDevLog } from '../../src/hooks/useDevLog';
 
+const fetchWithTimeout = async (
+  url: string,
+  options: RequestInit = {},
+  timeout = 2000
+) => {
+  const controller = new AbortController();
+  const { signal } = controller;
+  const fetchPromise = fetch(url, { ...options, signal });
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => {
+      controller.abort();
+      reject(new Error('Request timed out'));
+    }, timeout)
+  );
+
+  return Promise.race([fetchPromise, timeoutPromise]);
+};
+
 export default function App() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(30);
@@ -17,7 +37,7 @@ export default function App() {
   const devLog = useDevLog(__DEV__);
 
   useEffect(() => {
-    console.log('#######################r#############');
+    console.log('####################################');
     console.log(freshFlatListRef.current);
     console.log('####################################');
     freshFlatListRef.current?.reset();
@@ -58,11 +78,21 @@ export default function App() {
             previousListLength: previousList.length,
           });
 
-          const response = await fetch(
-            `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
-          );
-
+          let response;
+          try {
+            response = await fetchWithTimeout(
+              `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
+            );
+          } catch (e) {
+            response = new Response(null, {
+              status: 408,
+              statusText: 'Request Timeout',
+            });
+          }
           devLog('#response.status', response.status);
+          if (response.status !== 200) {
+            devLog(`#fetch status :${response.status}:`, response.statusText);
+          }
 
           const data: {
             boardList: Array<Board>;
