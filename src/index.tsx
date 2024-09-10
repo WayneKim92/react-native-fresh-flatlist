@@ -1,5 +1,13 @@
 import { FlatList, type FlatListProps } from 'react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type ForwardedRef,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useDevLog } from './hooks/useDevLog';
 
 // 남득할만한 interface
@@ -12,6 +20,8 @@ import { useDevLog } from './hooks/useDevLog';
 // RN 타입 중 export 안 되어 있는 타입만 여기에 나열하자
 type onEndReachedParam = { distanceFromEnd: number };
 
+// 상수 목록
+const FIRST_PAGE = 1;
 /**
  * FreshTrigger
  * - general: 일반적인 상황에서 fetch를 호출한다.
@@ -28,18 +38,26 @@ export type FetchOutputMeta<T> = Promise<{
   list: T[];
   isLastPage: boolean;
 }>;
+
 interface FreshFlatListProps<T> extends Omit<FlatListProps<T>, 'data'> {
   freshTriggers?: FreshTrigger[];
   isFocused?: boolean;
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
   devMode?: boolean;
 }
-const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
+export interface FreshFlatListRef {
+  reset: () => void;
+}
+
+function FreshFlatList<T>(
+  props: FreshFlatListProps<T>,
+  ref: ForwardedRef<FreshFlatListRef>
+) {
   const { renderItem, fetchList, devMode, ...otherProps } = props;
 
   const [data, setData] = useState<T[]>([]);
   const previousListRef = useRef(data);
-  const currentPageRef = useRef(1);
+  const currentPageRef = useRef(FIRST_PAGE);
   const currentFetchTypeRef = useRef<FetchType>('current');
   const currentStopNextFetchRef = useRef(false);
 
@@ -56,11 +74,24 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
     },
     [devLog]
   );
+  const resetData = useCallback(() => {
+    setData([]);
+    currentPageRef.current = FIRST_PAGE;
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      resetData();
+    },
+  }));
 
   // initial fetch
   useEffect(() => {
     (async () => {
-      devLog('initial fetch');
+      devLog('initial fetch | reset and initial fetch');
+      updateData([]);
+      currentPageRef.current = FIRST_PAGE;
+
       const { list } = await fetchList({
         fetchPage: currentPageRef.current,
         fetchType: currentFetchTypeRef.current,
@@ -91,11 +122,8 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
       fetchType: currentFetchTypeRef.current,
       previousList: previousListRef.current,
     });
+    if (isLastPage) currentStopNextFetchRef.current = true;
     updateData(list);
-
-    if (isLastPage) {
-      currentStopNextFetchRef.current = true;
-    }
   };
 
   devLog('#render in FreshFlatList');
@@ -110,7 +138,11 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
       {...otherProps}
     />
   );
-};
+}
+
+export default forwardRef(FreshFlatList) as <T>(
+  props: FreshFlatListProps<T> & { ref?: ForwardedRef<FreshFlatListRef> }
+) => ReturnType<typeof FreshFlatList>;
 
 /*
 페이지 기반 useCase 나열하자
@@ -118,6 +150,4 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
 - 스크롤 최상단에서 당겨서 내리면 list를 다 지우고 새로운 1페이잔 렌더링 한다.
 - 리스트 항목의 상세로 이동하였다가 다시 리스트로 돌아오면, 현재 페이지만 fetch하고 리스트를 렌더링 한다.
  */
-
-export default FreshFlatList;
 export { useDevLog } from './hooks/useDevLog';
