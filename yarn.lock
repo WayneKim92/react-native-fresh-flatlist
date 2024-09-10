@@ -3965,6 +3965,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wayne-kim/react-native-layout@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "@wayne-kim/react-native-layout@npm:0.3.3"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 845a870ac71ed488e26cd42aab60c4fbd8bfd5d38c39cf3aa5c55a4cfe43f4090d727ce138d1c390a1eebb9db8c4aa7700d90e0674e15d45ab197a4a29ed757a
+  languageName: node
+  linkType: hard
+
 "@xmldom/xmldom@npm:^0.8.8":
   version: 0.8.10
   resolution: "@xmldom/xmldom@npm:0.8.10"
@@ -12526,6 +12536,7 @@ __metadata:
   dependencies:
     "@babel/core": ^7.20.0
     "@expo/metro-runtime": ~3.2.3
+    "@wayne-kim/react-native-layout": ^0.3.3
     expo: ~51.0.28
     expo-status-bar: ~1.12.1
     react: 18.2.0
