@@ -25,10 +25,11 @@ export default function App() {
 
     console.log('response.status', response.status);
 
-    const data = await response.json();
+    const data: { boardList: Array<Board>; isLast: boolean; isFirst: boolean } =
+      await response.json();
 
     let list: Board[] = [];
-    if (data && data.boardList && data.boardList.lengh > 0) {
+    if (data && data.boardList && data.boardList.length > 0) {
       list = data.boardList;
       console.log('data 있음', list.length, data.isLast);
     } else {
