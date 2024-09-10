@@ -11,7 +11,7 @@ import { useDevLog } from '../../src/hooks/useDevLog';
 
 export default function App() {
   const [category, setCategory] = useState('ALL');
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(30);
   const [ownerId, setOwnerId] = useState(3);
 
   const devLog = useDevLog(__DEV__);
@@ -20,7 +20,6 @@ export default function App() {
   const fetchList = async (
     fetchInputMeta: FetchInputMeta<Board>
   ): FetchOutputMeta<Board> => {
-    devLog('################################################################');
     const { fetchPage = 1, fetchType, previousList } = fetchInputMeta;
 
     devLog('#fetchInputMeta:', {
@@ -78,7 +77,7 @@ export default function App() {
       <FreshFlatList<Board>
         devMode
         fetchList={fetchList}
-        keyExtractor={(item) => item.id.toString() + new Date().toString()}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }) => {
           return (
             <View style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}>

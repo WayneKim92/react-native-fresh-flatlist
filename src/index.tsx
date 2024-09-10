@@ -35,7 +35,7 @@ interface FreshFlatListProps<T> extends Omit<FlatListProps<T>, 'data'> {
   devMode?: boolean;
 }
 const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
-  const { renderItem, fetchList, ...otherProps } = props;
+  const { renderItem, fetchList, devMode, ...otherProps } = props;
 
   const [data, setData] = useState<T[]>([]);
   const previousListRef = useRef(data);
@@ -43,7 +43,7 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
   const currentFetchTypeRef = useRef<FetchType>('current');
   const currentStopNextFetchRef = useRef(false);
 
-  const devLog = useDevLog(__DEV__);
+  const devLog = useDevLog(devMode);
 
   const updateData = useCallback(
     (fetchData: T[]) => {
@@ -75,12 +75,14 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
     if (distanceFromEnd === 0) {
       return;
     }
-    devLog('onEndReached');
+    devLog('#onEndReached');
 
     if (currentStopNextFetchRef.current) {
-      devLog('stop next fetch');
+      devLog('#stoped fetch in onEndReached');
       return;
     }
+
+    devLog('#start fetch in onEndReached');
 
     currentPageRef.current += 1;
     currentFetchTypeRef.current = 'end-reached';
@@ -96,11 +98,13 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
     }
   };
 
+  devLog('#render in FreshFlatList');
+
   return (
     <FlatList<T>
       data={data}
       renderItem={renderItem}
-      onEndReachedThreshold={0.5}
+      onEndReachedThreshold={1}
       onEndReached={handleOnEndReached}
       contentContainerStyle={{ flexGrow: 1 }}
       {...otherProps}
