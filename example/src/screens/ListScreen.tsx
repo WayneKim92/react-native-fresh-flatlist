@@ -3,19 +3,32 @@ import FreshFlatList, {
   type FreshFlatListRef,
   useDevLog,
 } from 'react-native-fresh-flatlist';
-import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import TestInputText from '../components/TestInputText';
-import type { Board } from '../ignore/types';
+import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
 import config from '../ignore/config.json';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 
 export default function ListScreen() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(30);
   const [ownerId, setOwnerId] = useState(3);
   const freshFlatListRef = useRef<FreshFlatListRef>(null);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const devLog = useDevLog(__DEV__);
+
+  const goToDetailScreen = (item: Board) => {
+    navigation.navigate('DetailScreen', { item });
+  };
 
   useEffect(() => {
     freshFlatListRef.current?.reset();
@@ -92,7 +105,10 @@ export default function ListScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }: { item: Board; index: number }) => {
           return (
-            <View style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}>
+            <Pressable
+              style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}
+              onPress={() => goToDetailScreen(item)}
+            >
               <View style={{ flexDirection: 'row' }}>
                 <Image
                   source={{ uri: item.writerImage }}
@@ -122,7 +138,7 @@ export default function ListScreen() {
                   />
                 )}
               </View>
-            </View>
+            </Pressable>
           );
         }}
         style={{ flex: 1 }}
