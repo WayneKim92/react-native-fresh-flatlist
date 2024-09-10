@@ -1,5 +1,6 @@
 import { FlatList, type FlatListProps } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDevLog } from './hooks/useDevLog';
 
 // 남득할만한 interface
 // 내 기계는 알아서 딱, 센스 있게 딱!
@@ -17,51 +18,82 @@ type onEndReachedParam = { distanceFromEnd: number };
  * - viewed-page: 페이지 이동 후 되돌아 왔을 때에도 fetch하여 해당 페이지를 갱신한다
  */
 type FreshTrigger = 'general' | 'viewed-page' | string;
-export type FetchType = 'first' | 'previous' | 'current' | 'next';
-export type FetchInputMeta = {
-  // fetchType: FetchType;
+export type FetchType = 'first' | 'current' | 'end-reached';
+export type FetchInputMeta<T> = {
+  fetchType: FetchType;
   fetchPage: number;
+  previousList: T[];
 };
 export type FetchOutputMeta<T> = Promise<{
-  // fetchType: FetchType;
   list: T[];
   isLastPage: boolean;
 }>;
 interface FreshFlatListProps<T> extends Omit<FlatListProps<T>, 'data'> {
   freshTriggers?: FreshTrigger[];
   isFocused?: boolean;
-  fetchList: (fetchInputMeta: FetchInputMeta) => FetchOutputMeta<T>;
+  fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
+  devMode?: boolean;
 }
-
 const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
   const { renderItem, fetchList, ...otherProps } = props;
 
   const [data, setData] = useState<T[]>([]);
+  const previousListRef = useRef(data);
   const currentPageRef = useRef(1);
+  const currentFetchTypeRef = useRef<FetchType>('current');
+  const currentStopNextFetchRef = useRef(false);
+
+  const devLog = useDevLog(__DEV__);
+
+  const updateData = useCallback(
+    (fetchData: T[]) => {
+      setData((prevState) => {
+        const newData = [...prevState, ...fetchData];
+        devLog('#data:', newData.length);
+        previousListRef.current = newData;
+        return newData;
+      });
+    },
+    [devLog]
+  );
 
   // initial fetch
   useEffect(() => {
     (async () => {
-      console.log('initial fetch');
+      devLog('initial fetch');
       const { list } = await fetchList({
         fetchPage: currentPageRef.current,
-        // fetchType: currentFetchTypeRef.current,
+        fetchType: currentFetchTypeRef.current,
+        previousList: previousListRef.current,
       });
-      setData((prevState) => [...prevState, ...list]);
+      updateData(list);
     })();
-  }, [fetchList]);
+  }, [devLog, fetchList, updateData]);
 
   // fetch when end reached
   const handleOnEndReached = async ({ distanceFromEnd }: onEndReachedParam) => {
     if (distanceFromEnd === 0) {
       return;
     }
-    console.log('onEndReached');
+    devLog('onEndReached');
+
+    if (currentStopNextFetchRef.current) {
+      devLog('stop next fetch');
+      return;
+    }
+
     currentPageRef.current += 1;
-    const { list } = await fetchList({
+    currentFetchTypeRef.current = 'end-reached';
+    const { list, isLastPage } = await fetchList({
       fetchPage: currentPageRef.current,
+      fetchType: currentFetchTypeRef.current,
+      previousList: previousListRef.current,
     });
-    setData((prevState) => [...prevState, ...list]);
+    updateData(list);
+
+    if (isLastPage) {
+      currentStopNextFetchRef.current = true;
+    }
   };
 
   return (
@@ -84,3 +116,4 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
  */
 
 export default FreshFlatList;
+export { useDevLog } from './hooks/useDevLog';

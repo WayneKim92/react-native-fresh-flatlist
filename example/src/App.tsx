@@ -7,23 +7,32 @@ import config from './ignore/config.json';
 import { type Board } from './ignore/types';
 import { useEffect, useState } from 'react';
 import TestInputText from './TestInputText';
+import { useDevLog } from '../../src/hooks/useDevLog';
 
 export default function App() {
   const [category, setCategory] = useState('ALL');
-  const [size, setSize] = useState(60);
+  const [size, setSize] = useState(10);
   const [ownerId, setOwnerId] = useState(3);
+
+  const devLog = useDevLog(__DEV__);
 
   // 네트워크 로직은 어떻게 입력할 것인가?
   const fetchList = async (
-    fetchInputMeta: FetchInputMeta
+    fetchInputMeta: FetchInputMeta<Board>
   ): FetchOutputMeta<Board> => {
-    const { fetchPage = 1 } = fetchInputMeta;
+    devLog('################################################################');
+    const { fetchPage = 1, fetchType, previousList } = fetchInputMeta;
+
+    devLog('#fetchInputMeta:', {
+      fetchType,
+      previousListLength: previousList.length,
+    });
 
     const response = await fetch(
       `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
     );
 
-    console.log('response.status', response.status);
+    devLog('#response.status', response.status);
 
     const data: { boardList: Array<Board>; isLast: boolean; isFirst: boolean } =
       await response.json();
@@ -31,15 +40,12 @@ export default function App() {
     let list: Board[] = [];
     if (data && data.boardList && data.boardList.length > 0) {
       list = data.boardList;
-      console.log('data 있음', list.length, data.isLast);
-    } else {
-      console.log('data 없음', list.length, data.isLast);
     }
+    devLog('#fetch list:', list.length);
+    devLog('#isLast:', data.isLast);
 
     return {
-      // fetchType: 'current',
       list: list as Board[],
-      // isFirstPage: data.isFirst,
       isLastPage: data.isLast,
     };
   };
@@ -70,7 +76,9 @@ export default function App() {
         />
       </View>
       <FreshFlatList<Board>
+        devMode
         fetchList={fetchList}
+        keyExtractor={(item) => item.id.toString() + new Date().toString()}
         renderItem={({ item, index }) => {
           return (
             <View style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}>
