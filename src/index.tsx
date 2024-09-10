@@ -78,7 +78,7 @@ const FreshFlatList = <T,>(props: FreshFlatListProps<T>) => {
     devLog('#onEndReached');
 
     if (currentStopNextFetchRef.current) {
-      devLog('#stoped fetch in onEndReached');
+      devLog('#stoped fetch in onEndReached: list is already last page');
       return;
     }
 

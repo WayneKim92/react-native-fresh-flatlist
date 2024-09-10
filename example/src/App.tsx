@@ -23,6 +23,7 @@ export default function App() {
     const { fetchPage = 1, fetchType, previousList } = fetchInputMeta;
 
     devLog('#fetchInputMeta:', {
+      fetchPage,
       fetchType,
       previousListLength: previousList.length,
     });
