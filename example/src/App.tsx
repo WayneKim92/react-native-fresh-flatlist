@@ -11,7 +11,7 @@ import TestInputText from './TestInputText';
 export default function App() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(60);
-  const [ownerId, setOwnerId] = useState(4);
+  const [ownerId, setOwnerId] = useState(3);
 
   // 네트워크 로직은 어떻게 입력할 것인가?
   const fetchList = async (
@@ -23,14 +23,16 @@ export default function App() {
       `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
     );
 
+    console.log('response.status', response.status);
+
     const data = await response.json();
 
     let list: Board[] = [];
-    if (data && data.boardList) {
+    if (data && data.boardList && data.boardList.lengh > 0) {
       list = data.boardList;
-      console.log('data 있음', list.length);
+      console.log('data 있음', list.length, data.isLast);
     } else {
-      console.log('data 없음', list.length);
+      console.log('data 없음', list.length, data.isLast);
     }
 
     return {
