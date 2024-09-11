@@ -217,11 +217,22 @@ function FreshFlatList<T>(
   // monitor current page
   const handleOnViewableItemsChanged = useCallback(
     ({ viewableItems }: onViewableItemsChangedParam<T>) => {
-      if (!viewableItems || viewableItems.length === 0 || !viewableItems[0])
+      if (
+        !viewableItems ||
+        viewableItems.length === 0 ||
+        !viewableItems[0] ||
+        !viewableItems[viewableItems.length - 1]
+      )
         return;
 
       // Get the index of the first visible item
       const firstVisibleItemIndex = viewableItems[0].index;
+      const lastVisibleItemIndex =
+        // @ts-ignore
+        viewableItems[viewableItems.length - 1].index;
+
+      devLog('##FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
+      devLog('##FreshFlatList | lastVisibleItemIndex:', lastVisibleItemIndex);
 
       if (firstVisibleItemIndex) {
         let itemCount = 0;
@@ -236,7 +247,7 @@ function FreshFlatList<T>(
         }
       }
     },
-    [cache]
+    [cache, devLog]
   );
 
   // fresh current page when new screen focused, Ignore first screen focused
