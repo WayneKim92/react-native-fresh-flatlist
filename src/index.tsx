@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { useDevLog } from './hooks/useDevLog';
+import type { ViewToken } from '@react-native/virtualized-lists';
 
 // 남득할만한 interface
 // 내 기계는 알아서 딱, 센스 있게 딱!
@@ -19,6 +20,10 @@ import { useDevLog } from './hooks/useDevLog';
 
 // RN 타입 중 export 안 되어 있는 타입만 여기에 나열하자
 type onEndReachedParam = { distanceFromEnd: number };
+type onViewableItemsChangedParam<T> = {
+  viewableItems: Array<ViewToken<T>>;
+  changed: Array<ViewToken<T>>;
+};
 
 // 상수 목록
 const FIRST_PAGE = 1;
@@ -39,7 +44,8 @@ export type FetchOutputMeta<T> = Promise<{
   isLastPage: boolean;
 }>;
 
-interface FreshFlatListProps<T> extends Omit<FlatListProps<T>, 'data'> {
+interface FreshFlatListProps<T>
+  extends Omit<FlatListProps<T>, 'data' | 'onEndReached'> {
   freshTriggers?: FreshTrigger[];
   isFocused?: boolean;
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
@@ -58,13 +64,15 @@ function FreshFlatList<T>(
     fetchList,
     devMode,
     isFocused = null,
+    onEndReachedThreshold = 1,
     ...otherProps
   } = props;
 
   const cache = useRef<Map<number, T[]>>(new Map()).current;
   const [data, setData] = useState<T[]>([]);
   const previousListRef = useRef(data);
-  const recentlyFetchPageRef = useRef(FIRST_PAGE);
+  const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
+  const currentPageRef = useRef(FIRST_PAGE);
   const currentStopNextFetchRef = useRef(false);
 
   const isFirstFetchRef = useRef(true);
@@ -73,17 +81,21 @@ function FreshFlatList<T>(
 
   devLog('#FreshFlatList | data:', data.length);
   devLog('#FreshFlatList | isFocused:', isFocused);
-  devLog('#FreshFlatList | recentlyFetchPage:', recentlyFetchPageRef.current);
+  devLog(
+    '#FreshFlatList | recentlyFetchLastEdgePage:',
+    recentlyFetchLastEdgePageRef.current
+  );
+  devLog('#FreshFlatList | currentPage:', currentPageRef.current);
 
   const fetchAndCache = useCallback(
-    async (fetchType: FetchType) => {
+    async (fetchType: FetchType, page: number) => {
       const { list, isLastPage } = await fetchList({
-        fetchPage: recentlyFetchPageRef.current,
+        fetchPage: page,
         fetchType: fetchType,
         previousList: previousListRef.current,
       });
 
-      cache.set(recentlyFetchPageRef.current, list);
+      cache.set(page, list);
       return { list, isLastPage };
     },
     [cache, fetchList]
@@ -103,7 +115,7 @@ function FreshFlatList<T>(
 
   const resetData = useCallback(() => {
     setData([]);
-    recentlyFetchPageRef.current = FIRST_PAGE;
+    recentlyFetchLastEdgePageRef.current = FIRST_PAGE;
   }, []);
 
   const getAllCachedData = useCallback(() => {
@@ -118,6 +130,7 @@ function FreshFlatList<T>(
     setData(getAllCachedData());
   }, [getAllCachedData]);
 
+  // Methods that can be controlled from outside the component
   useImperativeHandle(ref, () => ({
     reset: () => {
       resetData();
@@ -131,7 +144,7 @@ function FreshFlatList<T>(
 
     (async () => {
       devLog('initial fetch');
-      const { list } = await fetchAndCache('first');
+      const { list } = await fetchAndCache('first', FIRST_PAGE);
       joinData(list);
     })();
   }, [devLog, fetchAndCache, fetchList, isFocused, joinData]);
@@ -150,11 +163,39 @@ function FreshFlatList<T>(
 
     devLog('#start fetch in onEndReached');
 
-    recentlyFetchPageRef.current += 1;
-    const { list, isLastPage } = await fetchAndCache('end-reached');
+    recentlyFetchLastEdgePageRef.current += 1;
+    const { list, isLastPage } = await fetchAndCache(
+      'end-reached',
+      recentlyFetchLastEdgePageRef.current
+    );
     if (isLastPage) currentStopNextFetchRef.current = true;
     joinData(list);
   };
+
+  // monitor current page
+  const handleOnViewableItemsChanged = useCallback(
+    ({ viewableItems }: onViewableItemsChangedParam<T>) => {
+      if (!viewableItems || viewableItems.length === 0 || !viewableItems[0])
+        return;
+
+      // Get the index of the first visible item
+      const firstVisibleItemIndex = viewableItems[0].index;
+
+      if (firstVisibleItemIndex) {
+        let itemCount = 0;
+
+        // Iterate through the cache to find the current page
+        for (const [page, items] of cache.entries()) {
+          itemCount += items.length;
+          if (firstVisibleItemIndex < itemCount) {
+            currentPageRef.current = page;
+            break;
+          }
+        }
+      }
+    },
+    [cache]
+  );
 
   // fresh current page when new screen focused, Ignore first screen focused
   useEffect(() => {
@@ -168,7 +209,7 @@ function FreshFlatList<T>(
       devLog('#fetch when screen focused');
 
       (async () => {
-        await fetchAndCache('current');
+        await fetchAndCache('current', currentPageRef.current);
         refreshDataFromCache();
       })();
     }
@@ -187,9 +228,9 @@ function FreshFlatList<T>(
     <FlatList<T>
       data={data}
       renderItem={renderItem}
-      onEndReachedThreshold={1}
+      onEndReachedThreshold={onEndReachedThreshold}
       onEndReached={handleOnEndReached}
-      contentContainerStyle={{ flexGrow: 1 }}
+      onViewableItemsChanged={handleOnViewableItemsChanged}
       {...otherProps}
     />
   );
