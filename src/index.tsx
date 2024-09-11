@@ -74,6 +74,7 @@ function FreshFlatList<T>(
   const watchingPagesRef = useRef({ first: FIRST_PAGE, second: FIRST_PAGE });
   const currentStopNextFetchRef = useRef(false);
   const isFirstFetchRef = useRef(true);
+  const previousIsFocused = useRef(isFocused);
 
   const devLog = useDevLog(devMode);
 
@@ -164,6 +165,7 @@ function FreshFlatList<T>(
           }
         }
       }
+      devLog('#isOnlyOnePageWatching | index', index);
 
       // 액션이 일어났던 페이지만 새로고침
       if (index) {
@@ -175,6 +177,9 @@ function FreshFlatList<T>(
       // 현재 보이는 페이지가 하나일 때
       const isOnlyOnePageWatching =
         watchingPagesRef.current.first === watchingPagesRef.current.second;
+
+      devLog('#isOnlyOnePageWatching', isOnlyOnePageWatching);
+
       if (isOnlyOnePageWatching) {
         await fetchAndCache('watching', watchingPagesRef.current.first);
         refreshDataFromCache();
@@ -182,14 +187,20 @@ function FreshFlatList<T>(
       }
 
       if (!isOnlyOnePageWatching) {
-        await fetchAndCache('watching', watchingPagesRef.current.first);
-        await fetchAndCache('watching', watchingPagesRef.current.second);
+        await Promise.all([
+          fetchAndCache('watching', watchingPagesRef.current.first),
+          fetchAndCache('watching', watchingPagesRef.current.second),
+        ]);
+        devLog(
+          '#refreshWatchingList | isOnlyOnePageWatching:',
+          isOnlyOnePageWatching
+        );
         refreshDataFromCache();
         return;
       }
       refreshDataFromCache();
     },
-    [cache, fetchAndCache, refreshDataFromCache]
+    [cache, devLog, fetchAndCache, refreshDataFromCache]
   );
 
   // Methods that can be controlled from outside the component
@@ -204,7 +215,7 @@ function FreshFlatList<T>(
   useEffect(() => {
     if (isFocused === false) return;
     if (!isFirstFetchRef.current) return;
-
+    isFirstFetchRef.current = false;
     devLog('#initial fetch | isFocused', isFocused);
     devLog('#initial fetch | isFirstFetchRef', isFirstFetchRef.current);
 
@@ -289,17 +300,21 @@ function FreshFlatList<T>(
         }
       }
 
-      // devLog('#FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
-      // devLog('#FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
-      // devLog('#FreshFlatList | watchingPages:', watchingPagesRef.current);
+      devLog('#FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
+      devLog('#FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
+      devLog('#FreshFlatList | watchingPages:', watchingPagesRef.current);
     },
-    [cache]
+    [cache, devLog]
   );
 
   // fresh current page when new screen focused, Ignore first screen focused
   useEffect(() => {
-    if (isFocused === undefined || isFirstFetchRef.current) return;
-    isFirstFetchRef.current = false;
+    if (isFocused === undefined) return;
+    if (previousIsFocused.current) {
+      previousIsFocused.current = isFocused;
+      return;
+    }
+    previousIsFocused.current = isFocused;
 
     if (isFocused) {
       devLog('#fetch when screen focused');
