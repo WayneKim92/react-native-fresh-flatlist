@@ -1,12 +1,13 @@
 # react-native-fresh-flatlist
 
-fresh fresh fresh list!
-
+Do you need to update FlatList data frequently? Are people constantly complaining that they don't see the most up-to-date information? Try using this component by simply entering data. Refresh will be the responsibility of this component.
 
 ## Installation
 
 ```sh
 npm install react-native-fresh-flatlist
+# or
+yarn add react-native-fresh-flatlist
 ```
 
 ## Usage
