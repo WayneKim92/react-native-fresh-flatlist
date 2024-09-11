@@ -1,6 +1,6 @@
 # react-native-fresh-flatlist
 
-Do you need to update FlatList data frequently? Are people constantly complaining that they don't see the most up-to-date information? Try using this component by simply entering data. Refresh will be the responsibility of this component.
+Do you need to update FlatList data frequently? Are people constantly complaining that they don't see the most up-to-date information? Try using this component by simply entering data. Refreshing is the responsibility of this component, Get away from data refreshing logic and focus on other things.
 
 ## Installation
 
