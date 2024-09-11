@@ -60,7 +60,7 @@ function FreshFlatList<T>(
     renderItem,
     fetchList,
     devMode,
-    isFocused = null,
+    isFocused,
     onEndReachedThreshold = 1,
     ...otherProps
   } = props;
@@ -202,10 +202,13 @@ function FreshFlatList<T>(
   // initial fetch
   useEffect(() => {
     if (isFocused === false) return;
-    if (!isFirstFetchRef.current) return; // 값 변경은 "fresh current page when new screen focused"에서 처리
+    if (!isFirstFetchRef.current) return;
+    isFirstFetchRef.current = false;
+
+    devLog('#initial fetch | isFocused', isFocused);
+    devLog('#initial fetch | isFirstFetchRef', isFirstFetchRef.current);
 
     (async () => {
-      devLog('initial fetch');
       const { list } = await fetchAndCache('first', FIRST_PAGE);
       joinData(list);
     })();
@@ -295,11 +298,7 @@ function FreshFlatList<T>(
 
   // fresh current page when new screen focused, Ignore first screen focused
   useEffect(() => {
-    if (isFocused === null) return;
-    if (isFirstFetchRef.current) {
-      isFirstFetchRef.current = false;
-      return;
-    }
+    if (isFocused === undefined) return;
 
     if (isFocused) {
       devLog('#fetch when screen focused');
