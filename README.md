@@ -14,6 +14,35 @@ npm install react-native-fresh-flatlist
 
 ```tsx
 function SampleList() {
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: Board; index: number }) => {
+      return (
+        <Pressable
+          style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}
+          onPress={() => navigation.navigate('DetailScreen', { item })}
+        >
+          <View>
+            <Text style={{ fontWeight: 'bold' }}>index : {index}</Text>
+            <Text>{item.content}</Text>
+          </View>
+
+          <Pressable
+            onPress={() => {
+              // If you want to refresh the page to which the item belongs after changing the status of the item.
+              // Example)
+              freshFlatListRef.current?.refreshWatching(index);
+            }}
+          >
+            <Text>LIKE!</Text>
+          </Pressable>
+        </Pressable>
+      );
+    },
+    [navigation]
+  );
 
   const fetchList = useCallback(
     async (fetchInputMeta: FetchInputMeta<T>) => {
@@ -76,6 +105,13 @@ function SampleList() {
 | `list`        | `T[]`               | Fetched list data. Calculated cumulatively within FreshFlatList                                |
 | `isLastPage`  | `boolean`           | If you enter true in isLastPage, fetch will not occur even if the end of the list is reached.  |
 
+### `FYI`
+The base of this component is FlatList, so FlatListProps can be used, but the following props cannot be used.
+- **'data'** : Fetch data is being accumulated inside the component.
+- **'onEndReached'** : When onEndReached is reached, the fetching logic is used internally.
+- **'keyExtractor'** : The key is created internally using page, fetch data, and timestamp.
+
+
 ## Methods
 
 ### `FreshFlatListRef`
@@ -88,9 +124,9 @@ Resets the list to the initial state.
 
 Refreshes the current page of the list.
 
-| Parameter | Type    | Description                                                                 |
-|-----------|---------|-----------------------------------------------------------------------------|
-| `index`   | `number`| Optional. If the index is given, the page containing the index is refreshed. If not, the current page is refreshed. |
+| Parameter | Type    | Description                                                                                                                  |
+|-----------|---------|------------------------------------------------------------------------------------------------------------------------------|
+| `index`   | `number`| Optional. If the index is given, the page containing the index is refreshed. If not, the current watching page is refreshed. |
 
 
 ## Contributing

@@ -3,15 +3,7 @@ import FreshFlatList, {
   type FetchInputMeta,
   type FreshFlatListRef,
 } from 'react-native-fresh-flatlist';
-import {
-  Button,
-  Image,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import TestInputText from '../components/TestInputText';
 import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
@@ -38,46 +30,20 @@ export default function ListScreen() {
           style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}
           onPress={() => navigation.navigate('DetailScreen', { item })}
         >
-          <View style={{ flexDirection: 'row' }}>
-            <Image
-              source={{ uri: item.writerImage }}
-              style={{ width: 50, height: 50, borderRadius: 25 }}
-            />
-            <View style={{ paddingLeft: 8 }}>
-              <Text>{item.writerSpaceName}</Text>
-              <Text>@{item.writerHandle}</Text>
-            </View>
+          <View>
+            <Text style={{ fontWeight: 'bold' }}>index : {index}</Text>
+            <Text>{item.content}</Text>
           </View>
 
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
+          <Pressable
+            onPress={() => {
+              // If you want to refresh the page to which the item belongs after changing the status of the item.
+              // Example)
+              freshFlatListRef.current?.refreshWatching(index);
             }}
           >
-            <View>
-              <Text style={{ fontWeight: 'bold' }}>index : {index}</Text>
-              <Text>{item.content}</Text>
-            </View>
-
-            {item.imageList && item.imageList.length > 0 && (
-              <Image
-                source={{ uri: item.imageList[0] }}
-                style={{ width: 75, height: 75, borderRadius: 8 }}
-              />
-            )}
-          </View>
-
-          <View>
-            <Button
-              title={'좋아요!'}
-              onPress={() => {
-                // If you want to refresh the page to which the item belongs after changing the status of the item.
-                // Example)
-                freshFlatListRef.current?.refreshWatching(index);
-              }}
-            />
-          </View>
+            <Text>LIKE!</Text>
+          </Pressable>
         </Pressable>
       );
     },
@@ -115,7 +81,7 @@ export default function ListScreen() {
     // If you want to rest the list when ownerId is changed
     if (previousOwnerId.current !== ownerId) {
       previousOwnerId.current = ownerId;
-      // freshFlatListRef.current?.reset();
+      freshFlatListRef.current?.reset();
     }
   }, [ownerId]);
 
