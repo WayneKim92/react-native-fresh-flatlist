@@ -68,13 +68,15 @@ function FreshFlatList<T>(
     ...otherProps
   } = props;
 
-  const cache = useRef<Map<number, T[]>>(new Map()).current;
   const [data, setData] = useState<T[]>([]);
+
+  const cache = useRef<Map<number, { data: T[]; timestamp: string }>>(
+    new Map()
+  ).current;
   const previousListRef = useRef(data);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
   const currentPageRef = useRef(FIRST_PAGE);
   const currentStopNextFetchRef = useRef(false);
-
   const isFirstFetchRef = useRef(true);
 
   const devLog = useDevLog(devMode);
@@ -87,6 +89,26 @@ function FreshFlatList<T>(
   );
   devLog('#FreshFlatList | currentPage:', currentPageRef.current);
 
+  const keyExtractor = useCallback(
+    (_item: T, index: number) => {
+      let itemIndex = index;
+      let pageIndex = 1;
+      let timestamp = '';
+
+      for (const [page, pageData] of cache.entries()) {
+        if (itemIndex < pageData.data.length) {
+          pageIndex = page;
+          timestamp = pageData.timestamp;
+          break;
+        }
+        itemIndex -= pageData.data.length;
+      }
+
+      return `${pageIndex}-${itemIndex}-${timestamp}`;
+    },
+    [cache]
+  );
+
   const fetchAndCache = useCallback(
     async (fetchType: FetchType, page: number) => {
       const { list, isLastPage } = await fetchList({
@@ -95,7 +117,8 @@ function FreshFlatList<T>(
         previousList: previousListRef.current,
       });
 
-      cache.set(page, list);
+      const timestamp = new Date().toISOString();
+      cache.set(page, { data: list, timestamp });
       return { list, isLastPage };
     },
     [cache, fetchList]
@@ -121,7 +144,7 @@ function FreshFlatList<T>(
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
     cache.forEach((pageData) => {
-      allData = [...allData, ...pageData];
+      allData = [...allData, ...pageData.data];
     });
     return allData;
   }, [cache]);
@@ -186,7 +209,7 @@ function FreshFlatList<T>(
 
         // Iterate through the cache to find the current page
         for (const [page, items] of cache.entries()) {
-          itemCount += items.length;
+          itemCount += items.data.length;
           if (firstVisibleItemIndex < itemCount) {
             currentPageRef.current = page;
             break;
@@ -226,6 +249,7 @@ function FreshFlatList<T>(
 
   return (
     <FlatList<T>
+      keyExtractor={keyExtractor}
       data={data}
       renderItem={renderItem}
       onEndReachedThreshold={onEndReachedThreshold}
