@@ -249,36 +249,46 @@ function FreshFlatList<T>(
 
       // Get the index of the first visible item
       const firstVisibleItemIndex = viewableItems[0].index;
-      // @ts-ignore
-      const lastVisibleItemIndex = viewableItems[viewableItemsCount - 1].index;
+      const secondVisibleItemIndex =
+        // @ts-ignore
+        viewableItems[viewableItemsCount - 1].index;
       if (
         firstVisibleItemIndex === null ||
         firstVisibleItemIndex === undefined ||
-        lastVisibleItemIndex === null ||
-        lastVisibleItemIndex === undefined
+        secondVisibleItemIndex === null ||
+        secondVisibleItemIndex === undefined
       ) {
         return;
       }
 
-      devLog('##FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
-      devLog('##FreshFlatList | lastVisibleItemIndex:', lastVisibleItemIndex);
-
-      const isOnlyOnePageWatching =
-        firstVisibleItemIndex === lastVisibleItemIndex;
-
-      let itemCount = 0;
-
       // Iterate through the cache to find the current page
+      let itemCount = 0;
+      let findFirstPage = false;
+      let findSecondPage = false;
       for (const [page, items] of cache.entries()) {
         itemCount += items.data.length;
-        if (firstVisibleItemIndex < itemCount) {
+        if (!findFirstPage && firstVisibleItemIndex < itemCount) {
+          findFirstPage = true;
           watchingPagesRef.current = {
+            ...watchingPagesRef.current,
             first: page,
-            second: isOnlyOnePageWatching ? page : page + 1,
           };
+        }
+        if (!findSecondPage && secondVisibleItemIndex < itemCount) {
+          findSecondPage = true;
+          watchingPagesRef.current = {
+            ...watchingPagesRef.current,
+            second: page,
+          };
+        }
+        if (findFirstPage && findSecondPage) {
           break;
         }
       }
+
+      devLog('##FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
+      devLog('##FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
+      devLog('##FreshFlatList | watchingPages:', watchingPagesRef.current);
     },
     [cache, devLog]
   );
