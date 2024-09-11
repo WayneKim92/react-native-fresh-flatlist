@@ -1,17 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import FreshFlatList, {
+  type FetchInputMeta,
   type FreshFlatListRef,
-  useDevLog,
 } from 'react-native-fresh-flatlist';
-import {
-  Button,
-  Image,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import TestInputText from '../components/TestInputText';
 import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
@@ -26,24 +18,76 @@ export default function ListScreen() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(10);
   const [ownerId, setOwnerId] = useState(29);
+  const previousOwnerId = useRef(ownerId);
   const freshFlatListRef = useRef<FreshFlatListRef>(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const isFocused = useIsFocused();
 
-  const devLog = useDevLog(__DEV__);
+  const renderItem = useCallback(
+    ({ item, index }: { item: Board; index: number }) => {
+      return (
+        <Pressable
+          style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}
+          onPress={() => navigation.navigate('DetailScreen', { item })}
+        >
+          <View>
+            <Text style={{ fontWeight: 'bold' }}>index : {index}</Text>
+            <Text>{item.content}</Text>
+          </View>
 
-  const goToDetailScreen = (item: Board) => {
-    navigation.navigate('DetailScreen', { item });
-  };
+          <Pressable
+            onPress={() => {
+              // If you want to refresh the page to which the item belongs after changing the status of the item.
+              // Example)
+              freshFlatListRef.current?.refreshWatching(index);
+            }}
+          >
+            <Text>LIKE!</Text>
+          </Pressable>
+        </Pressable>
+      );
+    },
+    [navigation]
+  );
+
+  const fetchList = useCallback(
+    async (fetchInputMeta: FetchInputMeta<Board>) => {
+      const { fetchPage } = fetchInputMeta;
+
+      const response = await fetchWithTimeout(
+        `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
+      );
+
+      const data: {
+        boardList: Array<Board>;
+        isLast: boolean;
+      } = await response.json();
+
+      let list: Board[] = [];
+      if (data && data.boardList && data.boardList.length > 0) {
+        list = data.boardList;
+      }
+
+      return {
+        list: list as Board[],
+        isLastPage: data.isLast,
+      };
+    },
+    [category, ownerId, size]
+  );
 
   useEffect(() => {
-    freshFlatListRef.current?.reset();
+    // Example)
+    // If you want to rest the list when ownerId is changed
+    if (previousOwnerId.current !== ownerId) {
+      previousOwnerId.current = ownerId;
+      freshFlatListRef.current?.reset();
+    }
   }, [ownerId]);
 
   return (
-    // 외부에서 처리할 연산, 내부에서 처리할 연산을 어떻게 구분하는 게 좋을까?
-    <SafeAreaView style={styles.container}>
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+    <SafeAreaView style={$styles.container}>
+      <View style={$styles.textController}>
         <TestInputText
           label={'Owner Id'}
           value={ownerId.toString()}
@@ -65,97 +109,10 @@ export default function ListScreen() {
       </View>
       <FreshFlatList<Board>
         ref={freshFlatListRef}
-        devMode={__DEV__}
         isFocused={isFocused}
-        fetchList={async (fetchInputMeta) => {
-          const { fetchPage, fetchType, previousList } = fetchInputMeta;
-
-          devLog('#fetchInputMeta:', {
-            fetchPage,
-            fetchType,
-            previousListLength: previousList.length,
-          });
-
-          let response;
-          try {
-            response = await fetchWithTimeout(
-              `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
-            );
-          } catch (e) {
-            response = new Response(null, {
-              status: 408,
-              statusText: 'Request Timeout',
-            });
-          }
-          devLog('#response.status', response.status);
-          if (response.status !== 200) {
-            devLog(`#fetch status :${response.status}:`, response.statusText);
-          }
-
-          const data: {
-            boardList: Array<Board>;
-            isLast: boolean;
-            isFirst: boolean;
-          } = await response.json();
-
-          let list: Board[] = [];
-          if (data && data.boardList && data.boardList.length > 0) {
-            list = data.boardList;
-          }
-          devLog('#fetch list:', list.length);
-          devLog('#isLast:', data.isLast);
-          return {
-            list: list as Board[],
-            isLastPage: data.isLast,
-          };
-        }}
-        renderItem={({ item, index }: { item: Board; index: number }) => {
-          return (
-            <Pressable
-              style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}
-              onPress={() => goToDetailScreen(item)}
-            >
-              <View style={{ flexDirection: 'row' }}>
-                <Image
-                  source={{ uri: item.writerImage }}
-                  style={{ width: 50, height: 50, borderRadius: 25 }}
-                />
-                <View style={{ paddingLeft: 8 }}>
-                  <Text>{item.writerSpaceName}</Text>
-                  <Text>@{item.writerHandle}</Text>
-                </View>
-              </View>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <View>
-                  <Text style={{ fontWeight: 'bold' }}>index : {index}</Text>
-                  <Text>{item.content}</Text>
-                </View>
-
-                {item.imageList && item.imageList.length > 0 && (
-                  <Image
-                    source={{ uri: item.imageList[0] }}
-                    style={{ width: 75, height: 75, borderRadius: 8 }}
-                  />
-                )}
-              </View>
-
-              <View>
-                <Button
-                  title={'좋아요!'}
-                  onPress={() =>
-                    freshFlatListRef.current?.refreshWatching(index)
-                  }
-                />
-              </View>
-            </Pressable>
-          );
-        }}
+        fetchList={fetchList}
+        renderItem={renderItem}
+        devMode={true}
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
@@ -168,16 +125,12 @@ export default function ListScreen() {
 }
 ListScreen.display = 'ListScreen';
 
-const styles = StyleSheet.create({
+const $styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  box: {
-    width: 50,
-    height: 50,
-    marginVertical: 20,
-    backgroundColor: 'red',
-    flexDirection: 'row',
-    alignSelf: 'center',
+  textController: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
 });
