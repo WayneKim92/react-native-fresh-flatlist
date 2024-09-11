@@ -15,14 +15,19 @@ import TestInputText from '../components/TestInputText';
 import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
 import config from '../ignore/config.json';
-import { useNavigation, type NavigationProp } from '@react-navigation/native';
+import {
+  useNavigation,
+  type NavigationProp,
+  useIsFocused,
+} from '@react-navigation/native';
 
 export default function ListScreen() {
   const [category, setCategory] = useState('ALL');
-  const [size, setSize] = useState(30);
-  const [ownerId, setOwnerId] = useState(3);
+  const [size, setSize] = useState(10);
+  const [ownerId, setOwnerId] = useState(29);
   const freshFlatListRef = useRef<FreshFlatListRef>(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const isFocused = useIsFocused();
 
   const devLog = useDevLog(__DEV__);
 
@@ -60,6 +65,7 @@ export default function ListScreen() {
       <FreshFlatList<Board>
         ref={freshFlatListRef}
         devMode={__DEV__}
+        isFocused={isFocused}
         fetchList={async (fetchInputMeta) => {
           const { fetchPage = 1, fetchType, previousList } = fetchInputMeta;
 

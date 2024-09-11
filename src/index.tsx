@@ -53,17 +53,43 @@ function FreshFlatList<T>(
   props: FreshFlatListProps<T>,
   ref: ForwardedRef<FreshFlatListRef>
 ) {
-  const { renderItem, fetchList, devMode, ...otherProps } = props;
+  const {
+    renderItem,
+    fetchList,
+    devMode,
+    isFocused = null,
+    ...otherProps
+  } = props;
 
+  const cache = useRef<Map<number, T[]>>(new Map()).current;
   const [data, setData] = useState<T[]>([]);
   const previousListRef = useRef(data);
-  const currentPageRef = useRef(FIRST_PAGE);
-  const currentFetchTypeRef = useRef<FetchType>('current');
+  const recentlyFetchPageRef = useRef(FIRST_PAGE);
   const currentStopNextFetchRef = useRef(false);
+
+  const isFirstFetchRef = useRef(true);
 
   const devLog = useDevLog(devMode);
 
-  const updateData = useCallback(
+  devLog('#FreshFlatList | data:', data.length);
+  devLog('#FreshFlatList | isFocused:', isFocused);
+  devLog('#FreshFlatList | recentlyFetchPage:', recentlyFetchPageRef.current);
+
+  const fetchAndCache = useCallback(
+    async (fetchType: FetchType) => {
+      const { list, isLastPage } = await fetchList({
+        fetchPage: recentlyFetchPageRef.current,
+        fetchType: fetchType,
+        previousList: previousListRef.current,
+      });
+
+      cache.set(recentlyFetchPageRef.current, list);
+      return { list, isLastPage };
+    },
+    [cache, fetchList]
+  );
+
+  const joinData = useCallback(
     (fetchData: T[]) => {
       setData((prevState) => {
         const newData = [...prevState, ...fetchData];
@@ -74,10 +100,23 @@ function FreshFlatList<T>(
     },
     [devLog]
   );
+
   const resetData = useCallback(() => {
     setData([]);
-    currentPageRef.current = FIRST_PAGE;
+    recentlyFetchPageRef.current = FIRST_PAGE;
   }, []);
+
+  const getAllCachedData = useCallback(() => {
+    let allData: T[] = [];
+    cache.forEach((pageData) => {
+      allData = [...allData, ...pageData];
+    });
+    return allData;
+  }, [cache]);
+
+  const refreshDataFromCache = useCallback(() => {
+    setData(getAllCachedData());
+  }, [getAllCachedData]);
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -87,19 +126,15 @@ function FreshFlatList<T>(
 
   // initial fetch
   useEffect(() => {
-    (async () => {
-      devLog('initial fetch | reset and initial fetch');
-      updateData([]);
-      currentPageRef.current = FIRST_PAGE;
+    if (isFocused === false) return;
+    if (!isFirstFetchRef.current) return; // 값 변경은 "fresh current page when new screen focused"에서 처리
 
-      const { list } = await fetchList({
-        fetchPage: currentPageRef.current,
-        fetchType: currentFetchTypeRef.current,
-        previousList: previousListRef.current,
-      });
-      updateData(list);
+    (async () => {
+      devLog('initial fetch');
+      const { list } = await fetchAndCache('first');
+      joinData(list);
     })();
-  }, [devLog, fetchList, updateData]);
+  }, [devLog, fetchAndCache, fetchList, isFocused, joinData]);
 
   // fetch when end reached
   const handleOnEndReached = async ({ distanceFromEnd }: onEndReachedParam) => {
@@ -115,16 +150,36 @@ function FreshFlatList<T>(
 
     devLog('#start fetch in onEndReached');
 
-    currentPageRef.current += 1;
-    currentFetchTypeRef.current = 'end-reached';
-    const { list, isLastPage } = await fetchList({
-      fetchPage: currentPageRef.current,
-      fetchType: currentFetchTypeRef.current,
-      previousList: previousListRef.current,
-    });
+    recentlyFetchPageRef.current += 1;
+    const { list, isLastPage } = await fetchAndCache('end-reached');
     if (isLastPage) currentStopNextFetchRef.current = true;
-    updateData(list);
+    joinData(list);
   };
+
+  // fresh current page when new screen focused, Ignore first screen focused
+  useEffect(() => {
+    if (isFocused === null) return;
+    if (isFirstFetchRef.current) {
+      isFirstFetchRef.current = false;
+      return;
+    }
+
+    if (isFocused) {
+      devLog('#fetch when screen focused');
+
+      (async () => {
+        await fetchAndCache('current');
+        refreshDataFromCache();
+      })();
+    }
+  }, [
+    devLog,
+    fetchAndCache,
+    fetchList,
+    isFocused,
+    joinData,
+    refreshDataFromCache,
+  ]);
 
   devLog('#render in FreshFlatList');
 
