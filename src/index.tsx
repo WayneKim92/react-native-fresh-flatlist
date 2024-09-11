@@ -72,7 +72,7 @@ function FreshFlatList<T>(
   ).current;
   const previousListRef = useRef(data);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
-  const currentPageRef = useRef(FIRST_PAGE);
+  const watchingPagesRef = useRef({ first: FIRST_PAGE, second: FIRST_PAGE });
   const currentStopNextFetchRef = useRef(false);
   const isFirstFetchRef = useRef(true);
 
@@ -84,7 +84,7 @@ function FreshFlatList<T>(
     '#FreshFlatList | recentlyFetchLastEdgePage:',
     recentlyFetchLastEdgePageRef.current
   );
-  devLog('#FreshFlatList | currentPage:', currentPageRef.current);
+  devLog('#FreshFlatList | watchingPage:', watchingPagesRef.current);
 
   const keyExtractor = useCallback(
     (_item: T, index: number) => {
@@ -163,9 +163,29 @@ function FreshFlatList<T>(
           }
         }
       }
-      const fetchPage = index ? pageFromIndex : currentPageRef.current;
 
-      await fetchAndCache('watching', fetchPage);
+      // 액션이 일어났던 페이지만 새로고침
+      if (index) {
+        await fetchAndCache('watching', pageFromIndex);
+        refreshDataFromCache();
+        return;
+      }
+
+      // 현재 보이는 페이지가 하나일 때
+      const isOnlyOnePageWatching =
+        watchingPagesRef.current.first === watchingPagesRef.current.second;
+      if (isOnlyOnePageWatching) {
+        await fetchAndCache('watching', watchingPagesRef.current.first);
+        refreshDataFromCache();
+        return;
+      }
+
+      if (!isOnlyOnePageWatching) {
+        await fetchAndCache('watching', watchingPagesRef.current.first);
+        await fetchAndCache('watching', watchingPagesRef.current.second);
+        refreshDataFromCache();
+        return;
+      }
       refreshDataFromCache();
     },
     [cache, fetchAndCache, refreshDataFromCache]
@@ -217,33 +237,46 @@ function FreshFlatList<T>(
   // monitor current page
   const handleOnViewableItemsChanged = useCallback(
     ({ viewableItems }: onViewableItemsChangedParam<T>) => {
+      const viewableItemsCount = viewableItems.length;
       if (
         !viewableItems ||
-        viewableItems.length === 0 ||
+        viewableItemsCount === 0 ||
         !viewableItems[0] ||
-        !viewableItems[viewableItems.length - 1]
-      )
+        !viewableItems[viewableItemsCount - 1]
+      ) {
         return;
+      }
 
       // Get the index of the first visible item
       const firstVisibleItemIndex = viewableItems[0].index;
-      const lastVisibleItemIndex =
-        // @ts-ignore
-        viewableItems[viewableItems.length - 1].index;
+      // @ts-ignore
+      const lastVisibleItemIndex = viewableItems[viewableItemsCount - 1].index;
+      if (
+        firstVisibleItemIndex === null ||
+        firstVisibleItemIndex === undefined ||
+        lastVisibleItemIndex === null ||
+        lastVisibleItemIndex === undefined
+      ) {
+        return;
+      }
 
       devLog('##FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
       devLog('##FreshFlatList | lastVisibleItemIndex:', lastVisibleItemIndex);
 
-      if (firstVisibleItemIndex) {
-        let itemCount = 0;
+      const isOnlyOnePageWatching =
+        firstVisibleItemIndex === lastVisibleItemIndex;
 
-        // Iterate through the cache to find the current page
-        for (const [page, items] of cache.entries()) {
-          itemCount += items.data.length;
-          if (firstVisibleItemIndex < itemCount) {
-            currentPageRef.current = page;
-            break;
-          }
+      let itemCount = 0;
+
+      // Iterate through the cache to find the current page
+      for (const [page, items] of cache.entries()) {
+        itemCount += items.data.length;
+        if (firstVisibleItemIndex < itemCount) {
+          watchingPagesRef.current = {
+            first: page,
+            second: isOnlyOnePageWatching ? page : page + 1,
+          };
+          break;
         }
       }
     },
