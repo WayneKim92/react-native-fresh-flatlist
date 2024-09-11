@@ -108,7 +108,6 @@ export default function ListScreen() {
             isLastPage: data.isLast,
           };
         }}
-        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }: { item: Board; index: number }) => {
           return (
             <Pressable
