@@ -22,7 +22,7 @@ type onViewableItemsChangedParam<T> = {
 const FIRST_PAGE = 1;
 
 // Type of FreshFlatList
-export type FetchType = 'first' | 'current' | 'end-reached';
+export type FetchType = 'first' | 'watching' | 'end-reached';
 export type FetchInputMeta<T> = {
   fetchType: FetchType;
   fetchPage: number;
@@ -221,7 +221,7 @@ function FreshFlatList<T>(
       devLog('#fetch when screen focused');
 
       (async () => {
-        await fetchAndCache('current', currentPageRef.current);
+        await fetchAndCache('watching', currentPageRef.current);
         refreshDataFromCache();
       })();
     }
