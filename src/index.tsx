@@ -40,7 +40,15 @@ interface FreshFlatListProps<T>
   devMode?: boolean;
 }
 export interface FreshFlatListRef {
+  /**
+   * Reset the list to the initial state.
+   */
   reset: () => void;
+  /**
+   * Refresh the current page of the list.
+   * @param index If the index is given, the page containing the index is refreshed. If not, the current page is refreshed.
+   */
+  refreshWatching: (index: number) => void;
 }
 
 // Define FreshFlatList
@@ -142,11 +150,33 @@ function FreshFlatList<T>(
     setData(getAllCachedData());
   }, [getAllCachedData]);
 
+  const refreshWatchingList = useCallback(
+    async (index?: number) => {
+      let pageFromIndex = 0;
+      if (index) {
+        let itemCount = 0;
+        for (const [page, items] of cache.entries()) {
+          itemCount += items.data.length;
+          if (index < itemCount) {
+            pageFromIndex = page;
+            break;
+          }
+        }
+      }
+      const fetchPage = index ? pageFromIndex : currentPageRef.current;
+
+      await fetchAndCache('watching', fetchPage);
+      refreshDataFromCache();
+    },
+    [cache, fetchAndCache, refreshDataFromCache]
+  );
+
   // Methods that can be controlled from outside the component
   useImperativeHandle(ref, () => ({
     reset: () => {
       resetData();
     },
+    refreshWatching: refreshWatchingList,
   }));
 
   // initial fetch
@@ -219,11 +249,7 @@ function FreshFlatList<T>(
 
     if (isFocused) {
       devLog('#fetch when screen focused');
-
-      (async () => {
-        await fetchAndCache('watching', currentPageRef.current);
-        refreshDataFromCache();
-      })();
+      refreshWatchingList();
     }
   }, [
     devLog,
@@ -232,6 +258,7 @@ function FreshFlatList<T>(
     isFocused,
     joinData,
     refreshDataFromCache,
+    refreshWatchingList,
   ]);
 
   devLog('#render in FreshFlatList');

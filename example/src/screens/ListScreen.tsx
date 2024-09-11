@@ -4,6 +4,7 @@ import FreshFlatList, {
   useDevLog,
 } from 'react-native-fresh-flatlist';
 import {
+  Button,
   Image,
   Pressable,
   SafeAreaView,
@@ -67,7 +68,7 @@ export default function ListScreen() {
         devMode={__DEV__}
         isFocused={isFocused}
         fetchList={async (fetchInputMeta) => {
-          const { fetchPage = 1, fetchType, previousList } = fetchInputMeta;
+          const { fetchPage, fetchType, previousList } = fetchInputMeta;
 
           devLog('#fetchInputMeta:', {
             fetchPage,
@@ -142,6 +143,15 @@ export default function ListScreen() {
                     style={{ width: 75, height: 75, borderRadius: 8 }}
                   />
                 )}
+              </View>
+
+              <View>
+                <Button
+                  title={'좋아요!'}
+                  onPress={() =>
+                    freshFlatListRef.current?.refreshWatching(index)
+                  }
+                />
               </View>
             </Pressable>
           );
