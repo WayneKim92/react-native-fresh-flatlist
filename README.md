@@ -85,28 +85,30 @@ function SampleList() {
 
 ### `FreshFlatListProps<T>`
 
-| Prop                | Type                                                        | Description                                                                               |
-|---------------------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| `fetchList`         | `(fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>` | Required. Function to fetch the list data.                                                |
-| `isFocused`         | `boolean`                                                   | Optional. refresh watchging list if the screen is focused.                                |
+| Prop                | Type                                                            | Description                                                                               |
+|---------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| `fetchList`         | `(fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>`     | Required. Function to fetch the list data.                                                |
+| `isFocused`         | `boolean`                                                       | Optional. refresh watchging list if the screen is focused.                                |
 | `FlatListComponent` | `ComponentType<FlatListProps<T>>` `typeof Animated.FlatList<T>` | Optional. If you need animation processing using Animated.FlatList or Reanimated.FlatList |
+| `LoadingComponent`  | `ReactNote`                                                     | Optional. Loading component.                                                              |
 
 ## fetchList Props
 
 ### `FetchInputMeta<T>`
 
-| Prop        | Type                | Description                                                                    |
-|-------------|---------------------|--------------------------------------------------------------------------------|
-| `fetchType` | `'first' \| 'watching' \| 'end-reached'` | Type of fetch operation.                                                       |
-| `fetchPage` | `number`            | Page number to fetch.  When the fetchList function is first executed, it is 1. |
-| `previousAllData`      | `T[]`               | Data held by Fresh FlatList before fetchList function was completed.                   |
+| Prop              | Type                                     | Description                                                                    |
+|-------------------|------------------------------------------|--------------------------------------------------------------------------------|
+| `fetchType`       | `'first' \| 'watching' \| 'end-reached'` | Type of fetch operation.                                                       |
+| `fetchPage`       | `number`                                 | Page number to fetch.  When the fetchList function is first executed, it is 1. |
+| `previousAllData` | `T[]`                                    | Data held by Fresh FlatList before fetchList function was completed.           |
 
 ### `FetchOutputMeta<T>`
 
-| Prop          | Type                | Description                                                                                    |
-|---------------|---------------------|------------------------------------------------------------------------------------------------|
-| `list`        | `T[]`               | Fetched list data. Calculated cumulatively within FreshFlatList                                |
-| `isLastPage`  | `boolean`           | If you enter true in isLastPage, fetch will not occur even if the end of the list is reached.  |
+| Prop            | Type        | Description                                                                                   |
+|-----------------|-------------|-----------------------------------------------------------------------------------------------|
+| `list`          | `T[]`       | Required. Fetched list data. Calculated cumulatively within FreshFlatList                     |
+| `isLastPage`    | `boolean`   | If you enter true in isLastPage, fetch will not occur even if the end of the list is reached. |
+| `isRenderReady` | `boolean`   | The Loading component is displayed until isRenderReady is returned with true at least once.   |
 
 ### `FYI`
 The base of this component is FlatList, so FlatListProps can be used, but the following props cannot be used.
