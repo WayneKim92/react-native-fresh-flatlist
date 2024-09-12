@@ -300,11 +300,11 @@ function FreshFlatList<T>(
         }
       }
 
-      devLog('#FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
-      devLog('#FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
-      devLog('#FreshFlatList | watchingPages:', watchingPagesRef.current);
+      // devLog('#FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
+      // devLog('#FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
+      // devLog('#FreshFlatList | watchingPages:', watchingPagesRef.current);
     },
-    [cache, devLog]
+    [cache]
   );
 
   // fresh current page when new screen focused, Ignore first screen focused
