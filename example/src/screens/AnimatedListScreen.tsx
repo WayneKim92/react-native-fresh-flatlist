@@ -1,13 +1,6 @@
-import {
-  type ForwardedRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import FreshFlatList, {
   type FetchInputMeta,
-  type FreshFlatListProps,
   type FreshFlatListRef,
 } from 'react-native-fresh-flatlist';
 import {
@@ -29,12 +22,6 @@ import {
   type NavigationProp,
   useIsFocused,
 } from '@react-navigation/native';
-
-const AnimatedFreshFlatList = Animated.createAnimatedComponent(
-  FreshFlatList
-) as <T>(
-  props: FreshFlatListProps<T> & { ref?: ForwardedRef<FreshFlatListRef> }
-) => ReturnType<typeof FreshFlatList>;
 
 export default function AnimatedListScreen() {
   const [category, setCategory] = useState('ALL');
@@ -154,12 +141,13 @@ export default function AnimatedListScreen() {
           placeholder={'개수'}
         />
       </Animated.View>
-      <AnimatedFreshFlatList<Board>
-        // ref={freshFlatListRef}
+      <FreshFlatList<Board>
+        ref={freshFlatListRef}
         isFocused={isFocused}
         fetchList={fetchList}
         renderItem={renderItem}
         devMode={true}
+        FlatListComponent={Animated.FlatList}
         style={[
           {
             flex: 1,
@@ -175,7 +163,7 @@ export default function AnimatedListScreen() {
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           {
-            useNativeDriver: false,
+            useNativeDriver: true,
             listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
               const { y } = event.nativeEvent.contentOffset;
               const currentScrollY = y;

@@ -1,5 +1,6 @@
-import { FlatList, type FlatListProps } from 'react-native';
+import { FlatList, type FlatListProps, Animated } from 'react-native';
 import {
+  type ComponentType,
   type ForwardedRef,
   forwardRef,
   useCallback,
@@ -38,6 +39,9 @@ export interface FreshFlatListProps<T>
   isFocused?: boolean;
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
   devMode?: boolean;
+  FlatListComponent?:
+    | ComponentType<FlatListProps<T>>
+    | typeof Animated.FlatList<T>;
 }
 export interface FreshFlatListRef {
   /**
@@ -62,6 +66,7 @@ function FreshFlatList<T>(
     devMode,
     isFocused,
     onEndReachedThreshold = 1,
+    FlatListComponent = FlatList,
     ...otherProps
   } = props;
 
@@ -331,7 +336,8 @@ function FreshFlatList<T>(
   ]);
 
   return (
-    <FlatList<T>
+    // @ts-ignore
+    <FlatListComponent<T>
       keyExtractor={keyExtractor}
       data={data}
       renderItem={renderItem}
