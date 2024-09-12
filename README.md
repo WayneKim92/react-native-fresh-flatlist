@@ -85,10 +85,11 @@ function SampleList() {
 
 ### `FreshFlatListProps<T>`
 
-| Prop           | Type                                                     | Description                                            |
-|----------------|----------------------------------------------------------|--------------------------------------------------------|
-| `fetchList`    | `(fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>` | Required. Function to fetch the list data.             |
-| `isFocused`    | `boolean`                                    | Optional. refresh watchging list if the screen is focused. |
+| Prop                | Type                                                        | Description                                                                               |
+|---------------------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| `fetchList`         | `(fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>` | Required. Function to fetch the list data.                                                |
+| `isFocused`         | `boolean`                                                   | Optional. refresh watchging list if the screen is focused.                                |
+| `FlatListComponent` | `ComponentType<FlatListProps<T>>` `typeof Animated.FlatList<T>` | Optional. If you need animation processing using Animated.FlatList or Reanimated.FlatList |
 
 ## fetchList Props
 
