@@ -1,5 +1,6 @@
-import { FlatList, type FlatListProps } from 'react-native';
+import { FlatList, type FlatListProps, Animated } from 'react-native';
 import {
+  type ComponentType,
   type ForwardedRef,
   forwardRef,
   useCallback,
@@ -33,11 +34,14 @@ export type FetchOutputMeta<T> = Promise<{
   isLastPage: boolean;
 }>;
 
-interface FreshFlatListProps<T>
+export interface FreshFlatListProps<T>
   extends Omit<FlatListProps<T>, 'data' | 'onEndReached' | 'keyExtractor'> {
   isFocused?: boolean;
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
   devMode?: boolean;
+  FlatListComponent?:
+    | ComponentType<FlatListProps<T>>
+    | typeof Animated.FlatList<T>;
 }
 export interface FreshFlatListRef {
   /**
@@ -62,6 +66,7 @@ function FreshFlatList<T>(
     devMode,
     isFocused,
     onEndReachedThreshold = 1,
+    FlatListComponent = FlatList,
     ...otherProps
   } = props;
 
@@ -300,11 +305,11 @@ function FreshFlatList<T>(
         }
       }
 
-      devLog('#FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
-      devLog('#FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
-      devLog('#FreshFlatList | watchingPages:', watchingPagesRef.current);
+      // devLog('#FreshFlatList | firstVisibleItemIndex:', firstVisibleItemIndex);
+      // devLog('#FreshFlatList | lastVisibleItemIndex:', secondVisibleItemIndex);
+      // devLog('#FreshFlatList | watchingPages:', watchingPagesRef.current);
     },
-    [cache, devLog]
+    [cache]
   );
 
   // fresh current page when new screen focused, Ignore first screen focused
@@ -331,7 +336,8 @@ function FreshFlatList<T>(
   ]);
 
   return (
-    <FlatList<T>
+    // @ts-ignore
+    <FlatListComponent<T>
       keyExtractor={keyExtractor}
       data={data}
       renderItem={renderItem}

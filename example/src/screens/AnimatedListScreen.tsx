@@ -3,7 +3,16 @@ import FreshFlatList, {
   type FetchInputMeta,
   type FreshFlatListRef,
 } from 'react-native-fresh-flatlist';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import TestInputText from '../components/TestInputText';
 import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
@@ -14,7 +23,7 @@ import {
   useIsFocused,
 } from '@react-navigation/native';
 
-export default function ListScreen() {
+export default function AnimatedListScreen() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(10);
   const [ownerId, setOwnerId] = useState(29);
@@ -22,6 +31,12 @@ export default function ListScreen() {
   const freshFlatListRef = useRef<FreshFlatListRef>(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const isFocused = useIsFocused();
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const isAnimating = useRef(false);
+  const lastScrollYRef = useRef(0);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   const renderItem = useCallback(
     ({ item, index }: { item: Board; index: number }) => {
@@ -87,7 +102,26 @@ export default function ListScreen() {
 
   return (
     <SafeAreaView style={$styles.container}>
-      <View style={$styles.textController}>
+      <Animated.View
+        style={[
+          $styles.textController,
+          {
+            backgroundColor: 'white',
+            zIndex: 1,
+            transform: [
+              {
+                translateY: animatedValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -headerHeight],
+                }),
+              },
+            ],
+          },
+        ]}
+        onLayout={(event) => {
+          setHeaderHeight(event.nativeEvent.layout.height);
+        }}
+      >
         <TestInputText
           label={'Owner Id'}
           value={ownerId.toString()}
@@ -106,14 +140,71 @@ export default function ListScreen() {
           onChangeValue={(value) => setSize(Number(value))}
           placeholder={'개수'}
         />
-      </View>
+      </Animated.View>
       <FreshFlatList<Board>
         ref={freshFlatListRef}
         isFocused={isFocused}
         fetchList={fetchList}
         renderItem={renderItem}
         devMode={true}
-        style={{ flex: 1 }}
+        FlatListComponent={Animated.FlatList}
+        style={[
+          {
+            flex: 1,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 0,
+            paddingTop: headerHeight,
+          },
+        ]}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: true,
+            listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+              const { y } = event.nativeEvent.contentOffset;
+              const currentScrollY = y;
+              const deltaY = Math.round(
+                currentScrollY - lastScrollYRef.current
+              );
+              lastScrollYRef.current = currentScrollY;
+              let direction = null;
+              if (deltaY < 0) {
+                direction = 'up';
+              } else if (deltaY > 0) {
+                direction = 'down';
+              }
+
+              if (direction === 'up' && !isAnimating.current) {
+                isAnimating.current = true;
+                Animated.timing(animatedValue, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                }).start(() => {
+                  isAnimating.current = false;
+                });
+              }
+              if (
+                direction === 'down' &&
+                currentScrollY > headerHeight &&
+                !isAnimating.current
+              ) {
+                isAnimating.current = true;
+                Animated.timing(animatedValue, {
+                  toValue: 1,
+                  duration: 300,
+                  useNativeDriver: true,
+                }).start(() => {
+                  isAnimating.current = false;
+                });
+              }
+            },
+          }
+        )}
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 16,
@@ -123,7 +214,7 @@ export default function ListScreen() {
     </SafeAreaView>
   );
 }
-ListScreen.display = 'ListScreen';
+AnimatedListScreen.display = 'AnimatedListScreen';
 
 const $styles = StyleSheet.create({
   container: {
