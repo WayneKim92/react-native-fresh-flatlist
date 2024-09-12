@@ -138,8 +138,12 @@ function FreshFlatList<T>(
     watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
     isFirstFetchRef.current = true;
     stopNextFetchRef.current = false;
-    setIsLoading(true);
-    setData([]);
+
+    // If the ref value and state are executed within the same function, another useEffect function may be executed before the ref value changes.
+    setTimeout(() => {
+      setIsLoading(true);
+      setData([]);
+    }, 0);
   }, [setIsLoading]);
 
   const getAllCachedData = useCallback(() => {
@@ -159,21 +163,17 @@ function FreshFlatList<T>(
       devLog('#fetchAndCache | fetchType:', fetchType);
       devLog('#fetchAndCache | fetchPage:', page);
 
-      const { list, isLastPage, isRenderReady } = await fetchList({
+      const { list, isLastPage } = await fetchList({
         fetchPage: page,
         fetchType: fetchType,
         previousAllData: getAllCachedData(),
       });
-
-      if (isRenderReady) {
-        setIsLoading(false);
-      }
-
+      setIsLoading(false);
       const timestamp = new Date().toISOString();
       cache.set(page, { data: list, timestamp });
       return { list, isLastPage };
     },
-    [cache, devLog, fetchList, getAllCachedData, setIsLoading]
+    [cache, devLog, fetchList, getAllCachedData]
   );
 
   const refreshWatchingList = useCallback(
