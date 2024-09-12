@@ -80,12 +80,12 @@ function FreshFlatList<T>(
     ...otherProps
   } = props;
 
+  const [isLoading, setIsLoading] = useState<Boolean>(true);
   const [data, setData] = useState<T[]>([]);
 
   const cache = useRef<Map<number, { data: T[]; timestamp: string }>>(
     new Map()
   ).current;
-  const isLoadingRef = useRef(true);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
   const watchingPagesRef = useRef({ first: FIRST_PAGE, second: FIRST_PAGE });
   const stopNextFetchRef = useRef(false);
@@ -138,10 +138,9 @@ function FreshFlatList<T>(
     watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
     isFirstFetchRef.current = true;
     stopNextFetchRef.current = false;
-    isLoadingRef.current = true;
-
+    setIsLoading(true);
     setData([]);
-  }, []);
+  }, [setIsLoading]);
 
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
@@ -167,14 +166,14 @@ function FreshFlatList<T>(
       });
 
       if (isRenderReady) {
-        isLoadingRef.current = false;
+        setIsLoading(false);
       }
 
       const timestamp = new Date().toISOString();
       cache.set(page, { data: list, timestamp });
       return { list, isLastPage };
     },
-    [cache, devLog, fetchList, getAllCachedData]
+    [cache, devLog, fetchList, getAllCachedData, setIsLoading]
   );
 
   const refreshWatchingList = useCallback(
@@ -366,7 +365,7 @@ function FreshFlatList<T>(
         {...otherProps}
       />
 
-      {isLoadingRef.current &&
+      {isLoading &&
         (LoadingComponent ? (
           LoadingComponent
         ) : (
