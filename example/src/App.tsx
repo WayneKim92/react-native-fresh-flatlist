@@ -23,7 +23,11 @@ export default function App() {
           name={ReanimatedListScreen.display}
           component={ReanimatedListScreen}
           options={{
-            // eslint-disable-next-line react/no-unstable-nested-components
+            headerLeft: () => (
+              <Pressable onPress={() => navigationRef.current?.goBack()}>
+                <Text>can goBack?</Text>
+              </Pressable>
+            ),
             headerRight: () => (
               <Pressable
                 onPress={() =>
@@ -39,7 +43,11 @@ export default function App() {
           name={AnimatedListScreen.display}
           component={AnimatedListScreen}
           options={{
-            // eslint-disable-next-line react/no-unstable-nested-components
+            headerLeft: () => (
+              <Pressable onPress={() => navigationRef.current?.goBack()}>
+                <Text>can goBack?</Text>
+              </Pressable>
+            ),
             headerRight: () => (
               <Pressable
                 onPress={() => {
@@ -55,7 +63,11 @@ export default function App() {
           name={ListScreen.display}
           component={ListScreen}
           options={{
-            // eslint-disable-next-line react/no-unstable-nested-components
+            headerLeft: () => (
+              <Pressable onPress={() => navigationRef.current?.goBack()}>
+                <Text>can goBack?</Text>
+              </Pressable>
+            ),
             headerRight: () => (
               <Pressable
                 onPress={() =>
