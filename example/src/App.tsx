@@ -21,6 +21,18 @@ export default function App() {
         <Stack.Screen
           name={AnimatedListScreen.display}
           component={AnimatedListScreen}
+          options={{
+            // eslint-disable-next-line react/no-unstable-nested-components
+            headerRight: () => (
+              <Pressable
+                onPress={() => {
+                  navigationRef.current?.navigate(ListScreen.display);
+                }}
+              >
+                <Text>v Non-Animated</Text>
+              </Pressable>
+            ),
+          }}
         />
         <Stack.Screen
           name={ListScreen.display}
@@ -33,7 +45,7 @@ export default function App() {
                   navigationRef.current?.navigate(AnimatedListScreen.display);
                 }}
               >
-                <Text>Animated Version</Text>
+                <Text>v Version</Text>
               </Pressable>
             ),
           }}
