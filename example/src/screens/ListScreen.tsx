@@ -7,7 +7,7 @@ import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import TestInputText from '../components/TestInputText';
 import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
-import config from '../ignore/config.json';
+import config from '../config.json';
 import {
   useNavigation,
   type NavigationProp,
