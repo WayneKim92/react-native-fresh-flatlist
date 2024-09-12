@@ -9,6 +9,7 @@ import {
 import ListScreen from './screens/ListScreen';
 import AnimatedListScreen from './screens/AnimatedListScreen';
 import DetailScreen from './screens/DetailScreen';
+import ReanimatedListScreen from './screens/ReanimatedListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,22 @@ export default function App() {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator>
+        <Stack.Screen
+          name={ReanimatedListScreen.display}
+          component={ReanimatedListScreen}
+          options={{
+            // eslint-disable-next-line react/no-unstable-nested-components
+            headerRight: () => (
+              <Pressable
+                onPress={() =>
+                  navigationRef.current?.navigate(AnimatedListScreen.display)
+                }
+              >
+                <Text>v Animated</Text>
+              </Pressable>
+            ),
+          }}
+        />
         <Stack.Screen
           name={AnimatedListScreen.display}
           component={AnimatedListScreen}
@@ -41,11 +58,11 @@ export default function App() {
             // eslint-disable-next-line react/no-unstable-nested-components
             headerRight: () => (
               <Pressable
-                onPress={() => {
-                  navigationRef.current?.navigate(AnimatedListScreen.display);
-                }}
+                onPress={() =>
+                  navigationRef.current?.navigate(ReanimatedListScreen.display)
+                }
               >
-                <Text>v Version</Text>
+                <Text>v Reanimated</Text>
               </Pressable>
             ),
           }}
