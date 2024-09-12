@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import FreshFlatList, {
   type FetchInputMeta,
+  type FetchOutputMeta,
   type FreshFlatListRef,
 } from 'react-native-fresh-flatlist';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
@@ -95,8 +96,8 @@ export default function ReanimatedListScreen() {
   );
 
   const fetchList = useCallback(
-    async (fetchInputMeta: FetchInputMeta<Board>) => {
-      const { fetchPage } = fetchInputMeta;
+    async (fetchInputMeta: FetchInputMeta<Board>): FetchOutputMeta<Board> => {
+      const { fetchPage, fetchType } = fetchInputMeta;
 
       const response = await fetchWithTimeout(
         `${config.api}boards?contentType=BOARD&ownerId=${ownerId}&category=${category}&page=${fetchPage}&size=${size}&sort=createdAt`
@@ -115,6 +116,7 @@ export default function ReanimatedListScreen() {
       return {
         list: list as Board[],
         isLastPage: data.isLast,
+        isRenderReady: fetchType === 'first' ? true : undefined,
       };
     },
     [category, ownerId, size]

@@ -1,7 +1,14 @@
-import { FlatList, type FlatListProps, Animated } from 'react-native';
+import {
+  type FlatListProps,
+  FlatList,
+  Animated,
+  View,
+  ActivityIndicator,
+} from 'react-native';
 import {
   type ComponentType,
   type ForwardedRef,
+  type ReactNode,
   forwardRef,
   useCallback,
   useEffect,
@@ -10,7 +17,7 @@ import {
   useState,
 } from 'react';
 import { useDevLog } from './hooks/useDevLog';
-import type { ViewToken } from '@react-native/virtualized-lists';
+import { type ViewToken } from '@react-native/virtualized-lists';
 
 // List of RN types that are not exported from the RN package
 type onEndReachedParam = { distanceFromEnd: number };
@@ -32,6 +39,7 @@ export type FetchInputMeta<T> = {
 export type FetchOutputMeta<T> = Promise<{
   list: T[];
   isLastPage: boolean;
+  isRenderReady?: boolean;
 }>;
 
 export interface FreshFlatListProps<T>
@@ -42,6 +50,7 @@ export interface FreshFlatListProps<T>
   FlatListComponent?:
     | ComponentType<FlatListProps<T>>
     | typeof Animated.FlatList<T>;
+  LoadingComponent?: ReactNode;
 }
 export interface FreshFlatListRef {
   /**
@@ -67,6 +76,7 @@ function FreshFlatList<T>(
     isFocused,
     onEndReachedThreshold = 1,
     FlatListComponent = FlatList,
+    LoadingComponent,
     ...otherProps
   } = props;
 
@@ -75,9 +85,10 @@ function FreshFlatList<T>(
   const cache = useRef<Map<number, { data: T[]; timestamp: string }>>(
     new Map()
   ).current;
+  const isLoadingRef = useRef(true);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
   const watchingPagesRef = useRef({ first: FIRST_PAGE, second: FIRST_PAGE });
-  const currentStopNextFetchRef = useRef(false);
+  const stopNextFetchRef = useRef(false);
   const isFirstFetchRef = useRef(true);
   const previousIsFocused = useRef(isFocused);
 
@@ -122,9 +133,14 @@ function FreshFlatList<T>(
     [devLog]
   );
 
-  const resetData = useCallback(() => {
-    setData([]);
+  const reset = useCallback(() => {
     recentlyFetchLastEdgePageRef.current = FIRST_PAGE;
+    watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
+    isFirstFetchRef.current = true;
+    stopNextFetchRef.current = false;
+    isLoadingRef.current = true;
+
+    setData([]);
   }, []);
 
   const getAllCachedData = useCallback(() => {
@@ -144,11 +160,15 @@ function FreshFlatList<T>(
       devLog('#fetchAndCache | fetchType:', fetchType);
       devLog('#fetchAndCache | fetchPage:', page);
 
-      const { list, isLastPage } = await fetchList({
+      const { list, isLastPage, isRenderReady } = await fetchList({
         fetchPage: page,
         fetchType: fetchType,
         previousAllData: getAllCachedData(),
       });
+
+      if (isRenderReady) {
+        isLoadingRef.current = false;
+      }
 
       const timestamp = new Date().toISOString();
       cache.set(page, { data: list, timestamp });
@@ -210,9 +230,7 @@ function FreshFlatList<T>(
 
   // Methods that can be controlled from outside the component
   useImperativeHandle(ref, () => ({
-    reset: () => {
-      resetData();
-    },
+    reset: reset,
     refreshWatching: refreshWatchingList,
   }));
 
@@ -237,7 +255,7 @@ function FreshFlatList<T>(
     }
     devLog('#onEndReached');
 
-    if (currentStopNextFetchRef.current) {
+    if (stopNextFetchRef.current) {
       devLog('#stoped fetch in onEndReached: list is already last page');
       return;
     }
@@ -249,7 +267,7 @@ function FreshFlatList<T>(
       'end-reached',
       recentlyFetchLastEdgePageRef.current
     );
-    if (isLastPage) currentStopNextFetchRef.current = true;
+    if (isLastPage) stopNextFetchRef.current = true;
     joinData(list);
   };
 
@@ -336,16 +354,32 @@ function FreshFlatList<T>(
   ]);
 
   return (
-    // @ts-ignore
-    <FlatListComponent<T>
-      keyExtractor={keyExtractor}
-      data={data}
-      renderItem={renderItem}
-      onEndReachedThreshold={onEndReachedThreshold}
-      onEndReached={handleOnEndReached}
-      onViewableItemsChanged={handleOnViewableItemsChanged}
-      {...otherProps}
-    />
+    <>
+      {/* @ts-ignore */}
+      <FlatListComponent<T>
+        keyExtractor={keyExtractor}
+        data={data}
+        renderItem={renderItem}
+        onEndReachedThreshold={onEndReachedThreshold}
+        onEndReached={handleOnEndReached}
+        onViewableItemsChanged={handleOnViewableItemsChanged}
+        {...otherProps}
+      />
+
+      {isLoadingRef.current &&
+        (LoadingComponent ? (
+          LoadingComponent
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+            }}
+          >
+            <ActivityIndicator />
+          </View>
+        ))}
+    </>
   );
 }
 
