@@ -40,9 +40,21 @@ export default function ReanimatedListScreen() {
     const deltaY = Math.round(currentScrollY - lastScrollYRef.current);
     lastScrollYRef.current = currentScrollY;
 
+    let direction = null;
+    if (deltaY > 0) {
+      direction = 'down';
+    }
     if (deltaY < 0) {
+      direction = 'up';
+    }
+
+    if (direction === 'up' && offsetY.value > headerHeight && deltaY !== null) {
       translateY.value = withTiming(0);
-    } else if (deltaY > 0) {
+    } else if (
+      direction === 'down' &&
+      offsetY.value > headerHeight &&
+      deltaY !== null
+    ) {
       translateY.value = withTiming(-headerHeight);
     }
 
