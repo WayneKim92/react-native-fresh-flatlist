@@ -13,8 +13,15 @@ import {
   type NavigationProp,
   useIsFocused,
 } from '@react-navigation/native';
+import {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import Reanimated from 'react-native-reanimated';
 
-export default function ListScreen() {
+export default function ReanimatedListScreen() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(10);
   const [ownerId, setOwnerId] = useState(29);
@@ -22,6 +29,31 @@ export default function ListScreen() {
   const freshFlatListRef = useRef<FreshFlatListRef>(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const isFocused = useIsFocused();
+
+  const lastScrollYRef = useRef(0);
+  const offsetY = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const currentScrollY = offsetY.value;
+    const deltaY = Math.round(currentScrollY - lastScrollYRef.current);
+    lastScrollYRef.current = currentScrollY;
+
+    if (deltaY < 0) {
+      translateY.value = withTiming(0);
+    } else if (deltaY > 0) {
+      translateY.value = withTiming(-headerHeight);
+    }
+
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    offsetY.value = event.contentOffset.y;
+  });
 
   const renderItem = useCallback(
     ({ item, index }: { item: Board; index: number }) => {
@@ -87,7 +119,19 @@ export default function ListScreen() {
 
   return (
     <SafeAreaView style={$styles.container}>
-      <View style={$styles.textController}>
+      <Reanimated.View
+        style={[
+          $styles.textController,
+          {
+            backgroundColor: 'white',
+            zIndex: 1,
+          },
+          animatedStyle,
+        ]}
+        onLayout={(event) => {
+          setHeaderHeight(event.nativeEvent.layout.height);
+        }}
+      >
         <TestInputText
           label={'Owner Id'}
           value={ownerId.toString()}
@@ -106,14 +150,27 @@ export default function ListScreen() {
           onChangeValue={(value) => setSize(Number(value))}
           placeholder={'개수'}
         />
-      </View>
+      </Reanimated.View>
       <FreshFlatList<Board>
         ref={freshFlatListRef}
         isFocused={isFocused}
         fetchList={fetchList}
         renderItem={renderItem}
         devMode={true}
-        style={{ flex: 1 }}
+        FlatListComponent={Reanimated.FlatList}
+        onScroll={scrollHandler}
+        style={[
+          {
+            flex: 1,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 0,
+            paddingTop: headerHeight,
+          },
+        ]}
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 16,
@@ -123,7 +180,7 @@ export default function ListScreen() {
     </SafeAreaView>
   );
 }
-ListScreen.display = 'ListScreen';
+ReanimatedListScreen.display = 'ReanimatedListScreen';
 
 const $styles = StyleSheet.create({
   container: {
