@@ -4,7 +4,14 @@ import FreshFlatList, {
   type FetchOutputMeta,
   type FreshFlatListRef,
 } from 'react-native-fresh-flatlist';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import {
+  Button,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import TestInputText from '../components/TestInputText';
 import type { Board, RootStackParamList } from '../types';
 import { fetchWithTimeout } from '../utils/functions';
@@ -21,10 +28,12 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 import Reanimated from 'react-native-reanimated';
+import { Row } from '@wayne-kim/react-native-layout';
 
 export default function ReanimatedListScreen() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(10);
+  const previousSize = useRef(size);
   const [ownerId, setOwnerId] = useState(29);
   const previousOwnerId = useRef(ownerId);
   const freshFlatListRef = useRef<FreshFlatListRef>(null);
@@ -123,13 +132,18 @@ export default function ReanimatedListScreen() {
   );
 
   useEffect(() => {
-    // Example)
     // If you want to rest the list when ownerId is changed
     if (previousOwnerId.current !== ownerId) {
       previousOwnerId.current = ownerId;
       freshFlatListRef.current?.reset();
     }
-  }, [ownerId]);
+
+    // If you want to rest the list when size is changed
+    if (previousSize.current !== size) {
+      previousSize.current = size;
+      freshFlatListRef.current?.reset();
+    }
+  }, [ownerId, size]);
 
   return (
     <SafeAreaView style={$styles.container}>
@@ -158,12 +172,11 @@ export default function ReanimatedListScreen() {
           onChangeValue={setCategory}
           placeholder={'카테고리'}
         />
-        <TestInputText
-          label={'Size '}
-          value={size.toString()}
-          onChangeValue={(value) => setSize(Number(value))}
-          placeholder={'개수'}
-        />
+        <Row flexGrow={1} alignItems={'center'}>
+          <Button title={'-'} onPress={() => setSize(size - 10)} />
+          <Text>{`Size: ${size}`}</Text>
+          <Button title={'+'} onPress={() => setSize(size + 10)} />
+        </Row>
       </Reanimated.View>
       <FreshFlatList<Board>
         ref={freshFlatListRef}
