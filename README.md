@@ -121,17 +121,13 @@ The base of this component is FlatList, so FlatListProps can be used, but the fo
 
 ### `FreshFlatListRef`
 
-#### `reset`
 
-Resets the list to the initial state.
 
-#### `refreshWatching`
-
-Refreshes the current page of the list.
-
-| Parameter | Type    | Description                                                                                                                  |
-|-----------|---------|------------------------------------------------------------------------------------------------------------------------------|
-| `index`   | `number`| Optional. If the index is given, the page containing the index is refreshed. If not, the current watching page is refreshed. |
+| Method            | Parameter | Type                 | Description                                                                                                                                            |
+|-------------------|-----------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `reset`           | `index`   | `number` `undefined` | Resets the list to the initial state. If the index is given, the page containing the index is refreshed. If not, the current watching page is refreshed. |
+| `refreshWatching` | `void`    | `number`             | Refreshes the current page of the list.                                                                                                                |
+| `flatList`        |           |                      | This is the "flatList ref" inside the FreshFlatList.                                                                                                   |                                                                                                                                              |
 
 
 ## Contributing

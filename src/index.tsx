@@ -78,7 +78,7 @@ function FreshFlatList<T>(
     fetchList,
     devMode,
     isFocused,
-    onEndReachedThreshold = 1,
+    onEndReachedThreshold = 0.5,
     FlatListComponent = FlatList,
     LoadingComponent,
     ...otherProps
@@ -92,6 +92,7 @@ function FreshFlatList<T>(
   const cache = useRef<Map<number, { data: T[]; timestamp: string }>>(
     new Map()
   ).current;
+  const isFetchingLastEdgePageRef = useRef(false);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
   const watchingPagesRef = useRef({ first: FIRST_PAGE, second: FIRST_PAGE });
   const stopNextFetchRef = useRef(false);
@@ -281,13 +282,19 @@ function FreshFlatList<T>(
       return;
     }
 
+    if (isFetchingLastEdgePageRef.current) {
+      devLog('#stoped fetch in onEndReached: already fetching');
+      return;
+    }
     devLog('#start fetch in onEndReached');
-
+    isFetchingLastEdgePageRef.current = true;
     recentlyFetchLastEdgePageRef.current += 1;
     const { list, isLastPage } = await fetchAndCache(
       'end-reached',
       recentlyFetchLastEdgePageRef.current
     );
+    isFetchingLastEdgePageRef.current = false;
+
     if (isLastPage) stopNextFetchRef.current = true;
     joinData(list);
   };
