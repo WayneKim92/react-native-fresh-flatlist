@@ -138,10 +138,17 @@ function FreshFlatList<T>(
     watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
     isFirstFetchRef.current = true;
     stopNextFetchRef.current = false;
-
     setIsLoading(true);
     setData([]);
-  }, [setIsLoading]);
+    devLog('#reset', {
+      recentlyFetchLastEdgePage: recentlyFetchLastEdgePageRef.current,
+      watchingPages: watchingPagesRef.current,
+      isFirstFetch: isFirstFetchRef.current,
+      stopNextFetch: stopNextFetchRef.current,
+      data: data.length,
+      isLoading,
+    });
+  }, [data, devLog, isLoading]);
 
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
@@ -230,19 +237,30 @@ function FreshFlatList<T>(
     refreshWatching: refreshWatchingList,
   }));
 
-  // initial fetch
+  // #리스트가 비어있는 상태에서 리스트 첫페이지 가져오기
   useEffect(() => {
-    if (isFocused === false) return;
-    if (!isFirstFetchRef.current) return;
+    if (isFocused === false) {
+      devLog('#initial fetch | 포커스 아웃 상태');
+      return;
+    }
+    if (data.length !== 0) {
+      devLog(
+        '#initial fetch | 데이터가 없는 상태가 아니라서 첫페이지 로딩 타임이 아님'
+      );
+      return;
+    }
+    if (!isFirstFetchRef.current) {
+      devLog('#initial fetch | 이미 첫페이지가 로드되어 있음');
+      return;
+    }
     isFirstFetchRef.current = false;
-    devLog('#initial fetch | isFocused', isFocused);
-    devLog('#initial fetch | isFirstFetchRef', isFirstFetchRef.current);
 
     (async () => {
+      devLog('#initial fetch | start fetch first page');
       const { list } = await fetchAndCache('first', FIRST_PAGE);
       joinData(list);
     })();
-  }, [devLog, fetchAndCache, fetchList, isFocused, joinData]);
+  }, [data, devLog, fetchAndCache, fetchList, isFocused, joinData]);
 
   // fetch when end reached
   const handleOnEndReached = async ({ distanceFromEnd }: onEndReachedParam) => {
