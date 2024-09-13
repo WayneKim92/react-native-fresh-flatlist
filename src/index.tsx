@@ -94,13 +94,13 @@ function FreshFlatList<T>(
 
   const devLog = useDevLog(devMode);
 
-  devLog('#FreshFlatList | data:', data.length);
-  devLog('#FreshFlatList | isFocused:', isFocused);
-  devLog(
-    '#FreshFlatList | recentlyFetchLastEdgePage:',
-    recentlyFetchLastEdgePageRef.current
-  );
-  devLog('#FreshFlatList | watchingPage:', watchingPagesRef.current);
+  // devLog('#FreshFlatList | data:', data.length);
+  // devLog('#FreshFlatList | isFocused:', isFocused);
+  // devLog(
+  //   '#FreshFlatList | recentlyFetchLastEdgePage:',
+  //   recentlyFetchLastEdgePageRef.current
+  // );
+  // devLog('#FreshFlatList | watchingPage:', watchingPagesRef.current);
 
   const keyExtractor = useCallback(
     (_item: T, index: number) => {
@@ -138,13 +138,17 @@ function FreshFlatList<T>(
     watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
     isFirstFetchRef.current = true;
     stopNextFetchRef.current = false;
-
-    // If the ref value and state are executed within the same function, another useEffect function may be executed before the ref value changes.
-    setTimeout(() => {
-      setIsLoading(true);
-      setData([]);
-    }, 0);
-  }, [setIsLoading]);
+    setIsLoading(true);
+    setData([]);
+    devLog('#reset', {
+      recentlyFetchLastEdgePage: recentlyFetchLastEdgePageRef.current,
+      watchingPages: watchingPagesRef.current,
+      isFirstFetch: isFirstFetchRef.current,
+      stopNextFetch: stopNextFetchRef.current,
+      data: data.length,
+      isLoading,
+    });
+  }, [data, devLog, isLoading]);
 
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
@@ -202,7 +206,7 @@ function FreshFlatList<T>(
       const isOnlyOnePageWatching =
         watchingPagesRef.current.first === watchingPagesRef.current.second;
 
-      devLog('#isOnlyOnePageWatching', isOnlyOnePageWatching);
+      // devLog('#isOnlyOnePageWatching', isOnlyOnePageWatching);
 
       if (isOnlyOnePageWatching) {
         await fetchAndCache('watching', watchingPagesRef.current.first);
@@ -215,10 +219,10 @@ function FreshFlatList<T>(
           fetchAndCache('watching', watchingPagesRef.current.first),
           fetchAndCache('watching', watchingPagesRef.current.second),
         ]);
-        devLog(
-          '#refreshWatchingList | isOnlyOnePageWatching:',
-          isOnlyOnePageWatching
-        );
+        // devLog(
+        //   '#refreshWatchingList | isOnlyOnePageWatching:',
+        //   isOnlyOnePageWatching
+        // );
         refreshDataFromCache();
         return;
       }
@@ -233,19 +237,30 @@ function FreshFlatList<T>(
     refreshWatching: refreshWatchingList,
   }));
 
-  // initial fetch
+  // #리스트가 비어있는 상태에서 리스트 첫페이지 가져오기
   useEffect(() => {
-    if (isFocused === false) return;
-    if (!isFirstFetchRef.current) return;
+    if (isFocused === false) {
+      devLog('#initial fetch | 포커스 아웃 상태');
+      return;
+    }
+    if (data.length !== 0) {
+      devLog(
+        '#initial fetch | 데이터가 없는 상태가 아니라서 첫페이지 로딩 타임이 아님'
+      );
+      return;
+    }
+    if (!isFirstFetchRef.current) {
+      devLog('#initial fetch | 이미 첫페이지가 로드되어 있음');
+      return;
+    }
     isFirstFetchRef.current = false;
-    devLog('#initial fetch | isFocused', isFocused);
-    devLog('#initial fetch | isFirstFetchRef', isFirstFetchRef.current);
 
     (async () => {
+      devLog('#initial fetch | start fetch first page');
       const { list } = await fetchAndCache('first', FIRST_PAGE);
       joinData(list);
     })();
-  }, [devLog, fetchAndCache, fetchList, isFocused, joinData]);
+  }, [data, devLog, fetchAndCache, fetchList, isFocused, joinData]);
 
   // fetch when end reached
   const handleOnEndReached = async ({ distanceFromEnd }: onEndReachedParam) => {
@@ -329,28 +344,27 @@ function FreshFlatList<T>(
     [cache]
   );
 
-  // fresh current page when new screen focused, Ignore first screen focused
+  // #스크린 재진입이 발생하였을 때, 새로고침
   useEffect(() => {
-    if (isFocused === undefined) return;
+    devLog('#new screen focused:', isFocused);
+
+    if (isFocused === undefined) {
+      devLog('#스크린 재진입 효과 | 포커스 아웃 상태', isFocused);
+      return;
+    }
     if (previousIsFocused.current) {
+      devLog('#스크린 재진입 효과 | 이미 포커스 인 상태', isFocused);
       previousIsFocused.current = isFocused;
       return;
     }
     previousIsFocused.current = isFocused;
-
     if (isFocused) {
-      devLog('#fetch when screen focused');
+      devLog(
+        '#스크린 재진입이 발생하여서 현재 보고 있는 페이지의 리스트만 새로고침을 합니다.'
+      );
       refreshWatchingList();
     }
-  }, [
-    devLog,
-    fetchAndCache,
-    fetchList,
-    isFocused,
-    joinData,
-    refreshDataFromCache,
-    refreshWatchingList,
-  ]);
+  }, [devLog, isFocused, joinData, refreshWatchingList]);
 
   return (
     <>
