@@ -1,6 +1,6 @@
 {
   "name": "react-native-fresh-flatlist",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "fresh fresh fresh list!",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
