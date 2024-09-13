@@ -62,6 +62,10 @@ export interface FreshFlatListRef {
    * @param index If the index is given, the page containing the index is refreshed. If not, the current page is refreshed.
    */
   refreshWatching: (index: number) => void;
+  /**
+   * Get the FlatList component.
+   */
+  flatList: FlatList<any> | null;
 }
 
 // Define FreshFlatList
@@ -79,6 +83,8 @@ function FreshFlatList<T>(
     LoadingComponent,
     ...otherProps
   } = props;
+
+  const flatListRef = useRef<FlatList>(null);
 
   const [isLoading, setIsLoading] = useState<Boolean>(true);
   const [data, setData] = useState<T[]>([]);
@@ -233,8 +239,9 @@ function FreshFlatList<T>(
 
   // Methods that can be controlled from outside the component
   useImperativeHandle(ref, () => ({
-    reset: reset,
+    reset,
     refreshWatching: refreshWatchingList,
+    flatList: flatListRef.current,
   }));
 
   // #리스트가 비어있는 상태에서 리스트 첫페이지 가져오기
@@ -370,6 +377,7 @@ function FreshFlatList<T>(
     <>
       {/* @ts-ignore */}
       <FlatListComponent<T>
+        ref={flatListRef}
         keyExtractor={keyExtractor}
         data={data}
         renderItem={renderItem}

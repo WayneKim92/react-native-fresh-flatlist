@@ -177,6 +177,34 @@ export default function ReanimatedListScreen() {
           <Text>{`Size: ${size}`}</Text>
           <Button title={'+'} onPress={() => setSize(size + 10)} />
         </Row>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+          }}
+        >
+          <Pressable
+            onPress={() => {
+              if (freshFlatListRef.current) {
+                const flatList = freshFlatListRef.current.flatList;
+
+                if (flatList) {
+                  flatList.scrollToIndex({ index: 0 });
+                }
+              }
+            }}
+            style={{
+              padding: 8,
+              marginRight: 16,
+              marginBottom: 16,
+
+              backgroundColor: 'black',
+            }}
+          >
+            <Text style={{ color: 'white' }}>TOP</Text>
+          </Pressable>
+        </View>
       </Reanimated.View>
       <FreshFlatList<Board>
         ref={freshFlatListRef}
