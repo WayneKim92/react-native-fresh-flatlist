@@ -92,6 +92,7 @@ function FreshFlatList<T>(
   const cache = useRef<Map<number, { data: T[]; timestamp: string }>>(
     new Map()
   ).current;
+  const isFetchingFirstPageRef = useRef(false);
   const isFetchingLastEdgePageRef = useRef(false);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
   const watchingPagesRef = useRef({ first: FIRST_PAGE, second: FIRST_PAGE });
@@ -265,7 +266,9 @@ function FreshFlatList<T>(
 
     (async () => {
       devLog('#initial fetch | start fetch first page');
+      isFetchingFirstPageRef.current = true;
       const { list } = await fetchAndCache('first', FIRST_PAGE);
+      isFetchingFirstPageRef.current = false;
       joinData(list);
     })();
   }, [data, devLog, fetchAndCache, fetchList, isFocused, joinData]);
@@ -276,6 +279,11 @@ function FreshFlatList<T>(
       return;
     }
     devLog('#onEndReached');
+
+    if (isFetchingFirstPageRef.current) {
+      devLog('#stoped fetch in onEndReached: first page already fetching');
+      return;
+    }
 
     if (stopNextFetchRef.current) {
       devLog('#stoped fetch in onEndReached: list is already last page');
