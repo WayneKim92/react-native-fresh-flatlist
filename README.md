@@ -3,13 +3,13 @@
 Do you need to update FlatList data frequently? Are people constantly complaining that they don't see the most up-to-date information? Try using this component by simply entering data. Refreshing is the responsibility of this component, Get away from data refreshing logic and focus on other things.
 
 ## Features
-- Flatlist based on infinite scroll page.
-- Take a page and combine them existen pages.
-- When you move to another screen and then come back, only the page you are currently viewing is retrieved and the page in the list is updated.
+- [X] Flatlist based on infinite scroll page.
+- [X] Take a page and combine them existen pages.
+- [X] When you move to another screen and then come back, only the page you are currently viewing is retrieved and the page in the list is updated.
   - If the page you are currently viewing is between the current page and the next page, both pages will be refreshed.
-- Reset by external request.
-- refresh only the page currently being viewed or a specific page.
-- In preparation) list catching.
+- [X] Reset by external request.
+- [X] refresh only the page currently being viewed or a specific page.
+- [ ] In preparation) list catching.
 
 ## Installation
 
