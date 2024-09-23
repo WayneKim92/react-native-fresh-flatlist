@@ -1,3 +1,4 @@
+// 코드가 길어지니 함수형 컴포넌트가 더 같다. 클래스로 바꾸는게 나을까? useEffect의 의존성 배열에 값이 많아지니 문제다...
 import {
   type FlatListProps,
   FlatList,
@@ -30,6 +31,7 @@ type onViewableItemsChangedParam<T> = {
 const FIRST_PAGE = 1;
 
 // Type of FreshFlatList
+type CacheType<T> = Map<number, { data: T[]; timestamp: string }>;
 export type FetchType = 'first' | 'watching' | 'end-reached';
 export type FetchInputMeta<T> = {
   fetchType: FetchType;
@@ -47,6 +49,7 @@ export interface FreshFlatListProps<T>
   isFocused?: boolean;
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
   devMode?: boolean;
+  fetchCoolTime?: number;
   FlatListComponent?:
     | ComponentType<FlatListProps<T>>
     | typeof Animated.FlatList<T>;
@@ -61,7 +64,7 @@ export interface FreshFlatListRef {
    * Refresh the current page of the list.
    * @param index If the index is given, the page containing the index is refreshed. If not, the current page is refreshed.
    */
-  refreshWatching: (index: number) => void;
+  refreshWatching: (index?: number) => void;
   /**
    * Get the FlatList component.
    */
@@ -79,6 +82,7 @@ function FreshFlatList<T>(
     devMode,
     isFocused,
     onEndReachedThreshold = 0.5,
+    fetchCoolTime = 1000,
     FlatListComponent = FlatList,
     LoadingComponent,
     ...otherProps
@@ -89,9 +93,7 @@ function FreshFlatList<T>(
   const [isLoading, setIsLoading] = useState<Boolean>(true);
   const [data, setData] = useState<T[]>([]);
 
-  const cache = useRef<Map<number, { data: T[]; timestamp: string }>>(
-    new Map()
-  ).current;
+  const cache = useRef<CacheType<T>>(new Map()).current;
   const isFetchingFirstPageRef = useRef(false);
   const isFetchingLastEdgePageRef = useRef(false);
   const recentlyFetchLastEdgePageRef = useRef(FIRST_PAGE);
@@ -146,6 +148,7 @@ function FreshFlatList<T>(
     watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
     isFirstFetchRef.current = true;
     stopNextFetchRef.current = false;
+    cache.clear();
     setIsLoading(true);
     setData([]);
     devLog('#reset', {
@@ -153,10 +156,11 @@ function FreshFlatList<T>(
       watchingPages: watchingPagesRef.current,
       isFirstFetch: isFirstFetchRef.current,
       stopNextFetch: stopNextFetchRef.current,
+      cache: cache.size,
       data: data.length,
       isLoading,
     });
-  }, [data, devLog, isLoading]);
+  }, [cache, data.length, devLog, isLoading]);
 
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
@@ -175,17 +179,38 @@ function FreshFlatList<T>(
       devLog('#fetchAndCache | fetchType:', fetchType);
       devLog('#fetchAndCache | fetchPage:', page);
 
+      // 불필요한 리스트 fetch 방지
+      const currentTime = Date.now();
+      const cacheEntry = cache.get(page);
+      if (
+        cacheEntry &&
+        currentTime - new Date(cacheEntry.timestamp).getTime() < fetchCoolTime
+      ) {
+        devLog(
+          '#fetchAndCache | 중복 호출 방지 | fetchCoolTime:',
+          currentTime - new Date(cacheEntry.timestamp).getTime()
+        );
+        return { list: [], isLastPage: false };
+      }
+      cache.set(page, {
+        data: [],
+        timestamp: new Date().toISOString(),
+      });
+
+      // fetch
       const { list, isLastPage } = await fetchList({
         fetchPage: page,
         fetchType: fetchType,
         previousAllData: getAllCachedData(),
       });
       setIsLoading(false);
-      const timestamp = new Date().toISOString();
-      cache.set(page, { data: list, timestamp });
+      cache.set(page, {
+        data: list,
+        timestamp: new Date().toISOString(),
+      });
       return { list, isLastPage };
     },
-    [cache, devLog, fetchList, getAllCachedData]
+    [cache, devLog, fetchCoolTime, fetchList, getAllCachedData]
   );
 
   const refreshWatchingList = useCallback(
