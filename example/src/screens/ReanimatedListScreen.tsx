@@ -45,6 +45,9 @@ export default function ReanimatedListScreen() {
   const translateY = useSharedValue(0);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // 다른 상태값에 의해 한번더 렌더링 되는 케이스 추가
+  const [_extraState, setExtraState] = useState(0);
+
   const animatedStyle = useAnimatedStyle(() => {
     const currentScrollY = offsetY.value;
     const deltaY = Math.round(currentScrollY - lastScrollYRef.current);
@@ -148,6 +151,11 @@ export default function ReanimatedListScreen() {
       previousSize.current = size;
       freshFlatListRef.current?.reset();
     }
+
+    setTimeout(() => {
+      freshFlatListRef.current?.refreshWatching();
+      setExtraState((prev) => prev + 1);
+    }, 100);
   }, [ownerId, size]);
 
   return (
