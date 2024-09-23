@@ -32,7 +32,7 @@ import { Row } from '@wayne-kim/react-native-layout';
 
 export default function ReanimatedListScreen() {
   const [category, setCategory] = useState('ALL');
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(20);
   const previousSize = useRef(size);
   const [ownerId, setOwnerId] = useState(29);
   const previousOwnerId = useRef(ownerId);
@@ -90,13 +90,18 @@ export default function ReanimatedListScreen() {
           </View>
 
           <Pressable
+            style={{
+              backgroundColor: 'black',
+              padding: 4,
+              alignSelf: 'flex-start',
+            }}
             onPress={() => {
               // If you want to refresh the page to which the item belongs after changing the status of the item.
               // Example)
               freshFlatListRef.current?.refreshWatching(index);
             }}
           >
-            <Text>LIKE!</Text>
+            <Text style={{ color: 'white' }}>LIKE!</Text>
           </Pressable>
         </Pressable>
       );
@@ -214,6 +219,10 @@ export default function ReanimatedListScreen() {
         devMode={true}
         FlatListComponent={Reanimated.FlatList}
         onScroll={scrollHandler}
+        refreshing={false}
+        onRefresh={() => {
+          freshFlatListRef.current?.reset();
+        }}
         style={[
           {
             flex: 1,
