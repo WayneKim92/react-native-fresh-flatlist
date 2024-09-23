@@ -16,6 +16,7 @@ import {
   useImperativeHandle,
   useRef,
   useState,
+  type MutableRefObject,
 } from 'react';
 import { useDevLog } from './hooks/useDevLog';
 import { type ViewToken } from '@react-native/virtualized-lists';
@@ -448,7 +449,9 @@ function FreshFlatList<T>(
 }
 
 export default forwardRef(FreshFlatList) as <T>(
-  props: FreshFlatListProps<T> & { ref?: ForwardedRef<FreshFlatListRef> }
+  props: FreshFlatListProps<T> & {
+    ref?: ForwardedRef<FreshFlatListRef> | MutableRefObject<FreshFlatListRef>;
+  }
 ) => ReturnType<typeof FreshFlatList>;
 
 export { useDevLog } from './hooks/useDevLog';
