@@ -32,7 +32,7 @@ import { Row } from '@wayne-kim/react-native-layout';
 
 export default function ReanimatedListScreen() {
   const [category, setCategory] = useState('ALL');
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(20);
   const previousSize = useRef(size);
   const [ownerId, setOwnerId] = useState(29);
   const previousOwnerId = useRef(ownerId);
@@ -44,6 +44,9 @@ export default function ReanimatedListScreen() {
   const offsetY = useSharedValue(0);
   const translateY = useSharedValue(0);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
+
+  // 다른 상태값에 의해 한번더 렌더링 되는 케이스 추가
+  const [_extraState, setExtraState] = useState(0);
 
   const animatedStyle = useAnimatedStyle(() => {
     const currentScrollY = offsetY.value;
@@ -90,13 +93,18 @@ export default function ReanimatedListScreen() {
           </View>
 
           <Pressable
+            style={{
+              backgroundColor: 'black',
+              padding: 4,
+              alignSelf: 'flex-start',
+            }}
             onPress={() => {
               // If you want to refresh the page to which the item belongs after changing the status of the item.
               // Example)
               freshFlatListRef.current?.refreshWatching(index);
             }}
           >
-            <Text>LIKE!</Text>
+            <Text style={{ color: 'white' }}>LIKE!</Text>
           </Pressable>
         </Pressable>
       );
@@ -143,6 +151,11 @@ export default function ReanimatedListScreen() {
       previousSize.current = size;
       freshFlatListRef.current?.reset();
     }
+
+    setTimeout(() => {
+      freshFlatListRef.current?.refreshWatching();
+      setExtraState((prev) => prev + 1);
+    }, 100);
   }, [ownerId, size]);
 
   return (
@@ -214,6 +227,10 @@ export default function ReanimatedListScreen() {
         devMode={true}
         FlatListComponent={Reanimated.FlatList}
         onScroll={scrollHandler}
+        refreshing={false}
+        onRefresh={() => {
+          freshFlatListRef.current?.reset();
+        }}
         style={[
           {
             flex: 1,
