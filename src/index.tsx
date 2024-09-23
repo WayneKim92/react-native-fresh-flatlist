@@ -24,7 +24,9 @@ import { type ViewToken } from '@react-native/virtualized-lists';
 // List of RN types that are not exported from the RN package
 type onEndReachedParam = { distanceFromEnd: number };
 type onViewableItemsChangedParam<T> = {
+  // @ts-ignore 구버전 RN에서 제네릭이 아닌 케이스 있음
   viewableItems: Array<ViewToken<T>>;
+  // @ts-ignore 구버전 RN에서 제네릭이 아닌 케이스 있음
   changed: Array<ViewToken<T>>;
 };
 
