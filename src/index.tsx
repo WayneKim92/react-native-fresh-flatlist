@@ -146,6 +146,7 @@ function FreshFlatList<T>(
     watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
     isFirstFetchRef.current = true;
     stopNextFetchRef.current = false;
+    cache.clear();
     setIsLoading(true);
     setData([]);
     devLog('#reset', {
@@ -153,10 +154,11 @@ function FreshFlatList<T>(
       watchingPages: watchingPagesRef.current,
       isFirstFetch: isFirstFetchRef.current,
       stopNextFetch: stopNextFetchRef.current,
+      cache: cache.size,
       data: data.length,
       isLoading,
     });
-  }, [data, devLog, isLoading]);
+  }, [cache, data.length, devLog, isLoading]);
 
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
