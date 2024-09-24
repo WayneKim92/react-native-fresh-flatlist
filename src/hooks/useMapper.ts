@@ -7,7 +7,7 @@ export const usePageKeyMapper = <T>() => {
     set: (page: number, key: T) => {
       map.set(page, key);
     },
-    get: (page: string) => map.get(page),
+    get: (page: number) => map.get(page),
     clear: () => map.clear(),
   };
 };
