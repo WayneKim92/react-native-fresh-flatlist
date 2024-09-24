@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://reactnative.dev/img/header_logo.svg"/>
+</p>
+
 # react-native-fresh-flatlist
 
 Do you need to update FlatList data frequently? Are people constantly complaining that they don't see the most up-to-date information? Try using this component by simply entering data. Refreshing is the responsibility of this component, Get away from data refreshing logic and focus on other things.
