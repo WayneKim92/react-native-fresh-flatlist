@@ -459,4 +459,4 @@ export default forwardRef(FreshFlatList) as <T>(
 ) => ReturnType<typeof FreshFlatList>;
 
 export { useDevLog } from './hooks/useDevLog';
-export { useKeyPageMapper } from './hooks/useMapper';
+export { usePageKeyMapper } from './hooks/useMapper';

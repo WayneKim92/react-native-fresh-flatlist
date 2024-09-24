@@ -1,13 +1,13 @@
 import { useRef } from 'react';
 
-export const useKeyPageMapper = () => {
+export const usePageKeyMapper = <T>() => {
   const map = useRef(new Map()).current;
 
   return {
-    set: (key: string, page: number) => {
-      map.set(key, page);
+    set: (page: number, key: T) => {
+      map.set(page, key);
     },
-    get: (key: string) => map.get(key),
+    get: (page: string) => map.get(page),
     clear: () => map.clear(),
   };
 };
