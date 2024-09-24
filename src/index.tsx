@@ -1,4 +1,4 @@
-// 코드가 길어지니 함수형 컴포넌트가 더 같다. 클래스로 바꾸는게 나을까? useEffect의 의존성 배열에 값이 많아지니 문제다...
+// 코드가 길어지니 함수형 컴포넌트가 더 복잡한 거 같다. 클래스로 바꾸는게 나을까? useEffect의 의존성 배열에 값이 많아지니 문제다...
 import {
   type FlatListProps,
   FlatList,
@@ -53,6 +53,7 @@ export interface FreshFlatListProps<T>
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
   devMode?: boolean;
   fetchCoolTime?: number;
+  unshiftData?: T[];
   FlatListComponent?:
     | ComponentType<FlatListProps<T>>
     | typeof Animated.FlatList<T>;
@@ -88,6 +89,7 @@ function FreshFlatList<T>(
     fetchCoolTime = 1000,
     FlatListComponent = FlatList,
     LoadingComponent,
+    unshiftData,
     ...otherProps
   } = props;
 
@@ -422,7 +424,7 @@ function FreshFlatList<T>(
       <FlatListComponent<T>
         ref={flatListRef}
         keyExtractor={keyExtractor}
-        data={data}
+        data={unshiftData ? [...unshiftData, ...data] : data}
         renderItem={renderItem}
         onEndReachedThreshold={onEndReachedThreshold}
         onEndReached={handleOnEndReached}
@@ -457,3 +459,4 @@ export default forwardRef(FreshFlatList) as <T>(
 ) => ReturnType<typeof FreshFlatList>;
 
 export { useDevLog } from './hooks/useDevLog';
+export { useKeyPageMapper } from './hooks/useMapper';

@@ -30,6 +30,8 @@ import {
 import Reanimated from 'react-native-reanimated';
 import { Row } from '@wayne-kim/react-native-layout';
 
+type Data = 'tabs' | Board;
+
 export default function ReanimatedListScreen() {
   const [category, setCategory] = useState('ALL');
   const [size, setSize] = useState(20);
@@ -81,7 +83,11 @@ export default function ReanimatedListScreen() {
   });
 
   const renderItem = useCallback(
-    ({ item, index }: { item: Board; index: number }) => {
+    ({ item, index }: { item: Data; index: number }) => {
+      if (item === 'tabs') {
+        return <View style={{ height: 50, backgroundColor: 'blue' }} />;
+      }
+
       return (
         <Pressable
           style={{ backgroundColor: 'gray', gap: 8, padding: 12 }}
@@ -113,7 +119,7 @@ export default function ReanimatedListScreen() {
   );
 
   const fetchList = useCallback(
-    async (fetchInputMeta: FetchInputMeta<Board>): FetchOutputMeta<Board> => {
+    async (fetchInputMeta: FetchInputMeta<Data>): FetchOutputMeta<Data> => {
       const { fetchPage, fetchType } = fetchInputMeta;
 
       const response = await fetchWithTimeout(
@@ -121,11 +127,11 @@ export default function ReanimatedListScreen() {
       );
 
       const data: {
-        boardList: Array<Board>;
+        boardList: Array<Data>;
         isLast: boolean;
       } = await response.json();
 
-      let list: Board[] = [];
+      let list: Data[] = [];
       if (data && data.boardList && data.boardList.length > 0) {
         list = data.boardList;
       }
@@ -219,13 +225,13 @@ export default function ReanimatedListScreen() {
           </Pressable>
         </View>
       </Reanimated.View>
-      <FreshFlatList<Board>
+      <FreshFlatList<'tabs' | Board>
         ref={freshFlatListRef}
         isFocused={isFocused}
+        unshiftData={['tabs']}
         fetchList={fetchList}
         renderItem={renderItem}
         devMode={true}
-        FlatListComponent={Reanimated.FlatList}
         onScroll={scrollHandler}
         refreshing={false}
         onRefresh={() => {
@@ -248,6 +254,7 @@ export default function ReanimatedListScreen() {
           paddingHorizontal: 16,
           gap: 12,
         }}
+        FlatListComponent={Reanimated.FlatList}
       />
     </SafeAreaView>
   );
