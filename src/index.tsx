@@ -54,6 +54,7 @@ export interface FreshFlatListProps<T>
   devMode?: boolean;
   fetchCoolTime?: number;
   unshiftData?: T[];
+  initData?: T[];
   FlatListComponent?:
     | ComponentType<FlatListProps<T>>
     | typeof Animated.FlatList<T>;
@@ -85,6 +86,7 @@ function FreshFlatList<T>(
     fetchList,
     devMode,
     isFocused,
+    initData = [],
     onEndReachedThreshold = 0.5,
     fetchCoolTime = 1000,
     FlatListComponent = FlatList,
@@ -96,7 +98,7 @@ function FreshFlatList<T>(
   const flatListRef = useRef<FlatList>(null);
 
   const [isLoading, setIsLoading] = useState<Boolean>(true);
-  const [data, setData] = useState<T[]>([]);
+  const [data, setData] = useState<T[]>(initData);
 
   const cache = useRef<CacheType<T>>(new Map()).current;
   const isFetchingFirstPageRef = useRef(false);
@@ -109,13 +111,9 @@ function FreshFlatList<T>(
 
   const devLog = useDevLog(devMode);
 
-  // devLog('#FreshFlatList | data:', data.length);
-  // devLog('#FreshFlatList | isFocused:', isFocused);
-  // devLog(
-  //   '#FreshFlatList | recentlyFetchLastEdgePage:',
-  //   recentlyFetchLastEdgePageRef.current
-  // );
-  // devLog('#FreshFlatList | watchingPage:', watchingPagesRef.current);
+  useEffect(() => {
+    setData(initData);
+  }, [initData]);
 
   const keyExtractor = useCallback(
     (_item: T, index: number) => {
@@ -458,5 +456,4 @@ export default forwardRef(FreshFlatList) as <T>(
   }
 ) => ReturnType<typeof FreshFlatList>;
 
-export { useDevLog } from './hooks/useDevLog';
-export { usePageKeyMapper } from './hooks/useMapper';
+export * from './hooks';
