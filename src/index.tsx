@@ -112,7 +112,9 @@ function FreshFlatList<T>(
   const devLog = useDevLog(devMode);
 
   useEffect(() => {
-    setData(initData);
+    if (initData) {
+      setData(initData);
+    }
   }, [initData]);
 
   const keyExtractor = useCallback(
