@@ -86,7 +86,7 @@ function FreshFlatList<T>(
     fetchList,
     devMode,
     isFocused,
-    initData = [],
+    initData,
     onEndReachedThreshold = 0.5,
     fetchCoolTime = 1000,
     FlatListComponent = FlatList,
@@ -98,7 +98,7 @@ function FreshFlatList<T>(
   const flatListRef = useRef<FlatList>(null);
 
   const [isLoading, setIsLoading] = useState<Boolean>(true);
-  const [data, setData] = useState<T[]>(initData);
+  const [data, setData] = useState<T[]>(initData ? initData : []);
 
   const cache = useRef<CacheType<T>>(new Map()).current;
   const isFetchingFirstPageRef = useRef(false);
