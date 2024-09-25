@@ -126,7 +126,6 @@ function SampleList() {
 The base of this component is FlatList, so FlatListProps can be used, but the following props cannot be used.
 - **'data'** : Fetch data is being accumulated inside the component.
 - **'onEndReached'** : When onEndReached is reached, the fetching logic is used internally.
-- **'keyExtractor'** : The key is created internally using page, fetch data, and timestamp.
 
 
 ## Methods

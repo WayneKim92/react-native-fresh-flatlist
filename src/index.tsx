@@ -48,7 +48,7 @@ export type FetchOutputMeta<T> = Promise<{
 }>;
 
 export interface FreshFlatListProps<T>
-  extends Omit<FlatListProps<T>, 'data' | 'onEndReached' | 'keyExtractor'> {
+  extends Omit<FlatListProps<T>, 'data' | 'onEndReached'> {
   isFocused?: boolean;
   fetchList: (fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>;
   devMode?: boolean;
