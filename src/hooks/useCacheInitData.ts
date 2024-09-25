@@ -1,13 +1,13 @@
 import { useRef } from 'react';
 
-export const useCacheInitData = <T>(key: string, data: T) => {
+export const useCacheInitData = <T>() => {
   const cache = useRef(new Map()).current;
 
   return {
-    set: () => {
+    set: (key: string, data: T) => {
       cache.set(key, data);
     },
-    get: () => cache.get(key) as T | undefined,
+    get: (key: string) => cache.get(key) as T | undefined,
     clear: () => cache.clear(),
   };
 };
