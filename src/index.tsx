@@ -64,7 +64,7 @@ export interface FreshFlatListRef {
   /**
    * Reset the list to the initial state.
    */
-  reset: () => void;
+  reset: (initData?: any) => void;
   /**
    * Refresh the current page of the list.
    * @param index If the index is given, the page containing the index is refreshed. If not, the current page is refreshed.
@@ -86,7 +86,7 @@ function FreshFlatList<T>(
     fetchList,
     devMode,
     isFocused,
-    initData = [],
+    initData,
     onEndReachedThreshold = 0.5,
     fetchCoolTime = 1000,
     FlatListComponent = FlatList,
@@ -98,7 +98,7 @@ function FreshFlatList<T>(
   const flatListRef = useRef<FlatList>(null);
 
   const [isLoading, setIsLoading] = useState<Boolean>(true);
-  const [data, setData] = useState<T[]>(initData);
+  const [data, setData] = useState<T[]>(initData ? initData : []);
 
   const cache = useRef<CacheType<T>>(new Map()).current;
   const isFetchingFirstPageRef = useRef(false);
@@ -112,7 +112,9 @@ function FreshFlatList<T>(
   const devLog = useDevLog(devMode);
 
   useEffect(() => {
-    setData(initData);
+    if (initData) {
+      setData(initData);
+    }
   }, [initData]);
 
   const keyExtractor = useCallback(
@@ -146,24 +148,27 @@ function FreshFlatList<T>(
     [devLog]
   );
 
-  const reset = useCallback(() => {
-    recentlyFetchLastEdgePageRef.current = FIRST_PAGE;
-    watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
-    isFirstFetchRef.current = true;
-    stopNextFetchRef.current = false;
-    cache.clear();
-    setIsLoading(true);
-    setData([]);
-    devLog('#reset', {
-      recentlyFetchLastEdgePage: recentlyFetchLastEdgePageRef.current,
-      watchingPages: watchingPagesRef.current,
-      isFirstFetch: isFirstFetchRef.current,
-      stopNextFetch: stopNextFetchRef.current,
-      cache: cache.size,
-      data: data.length,
-      isLoading,
-    });
-  }, [cache, data.length, devLog, isLoading]);
+  const reset = useCallback(
+    (newInitData: T[]) => {
+      recentlyFetchLastEdgePageRef.current = FIRST_PAGE;
+      watchingPagesRef.current = { first: FIRST_PAGE, second: FIRST_PAGE };
+      isFirstFetchRef.current = true;
+      stopNextFetchRef.current = false;
+      cache.clear();
+      setIsLoading(true);
+      setData(newInitData ? newInitData : []);
+      devLog('#reset', {
+        recentlyFetchLastEdgePage: recentlyFetchLastEdgePageRef.current,
+        watchingPages: watchingPagesRef.current,
+        isFirstFetch: isFirstFetchRef.current,
+        stopNextFetch: stopNextFetchRef.current,
+        cache: cache.size,
+        data: data.length,
+        isLoading,
+      });
+    },
+    [cache, data.length, devLog, isLoading]
+  );
 
   const getAllCachedData = useCallback(() => {
     let allData: T[] = [];
