@@ -13,7 +13,7 @@ Do you need to update FlatList data frequently? Are people constantly complainin
   - If the page you are currently viewing is between the current page and the next page, both pages will be refreshed.
 - [X] Reset by external request.
 - [X] refresh only the page currently being viewed or a specific page.
-- [ ] In preparation) list catching.
+- [X] Props that can utilize caching data
 
 ## Installation
 
@@ -97,12 +97,15 @@ function SampleList() {
 
 ### `FreshFlatListProps<T>`
 
-| Prop                | Type                                                            | Description                                                                               |
-|---------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| `fetchList`         | `(fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>`     | Required. Function to fetch the list data.                                                |
-| `isFocused`         | `boolean`                                                       | Optional. refresh watchging list if the screen is focused.                                |
-| `FlatListComponent` | `ComponentType<FlatListProps<T>>` `typeof Animated.FlatList<T>` | Optional. If you need animation processing using Animated.FlatList or Reanimated.FlatList |
-| `LoadingComponent`  | `ReactNote`                                                     | Optional. Loading component.                                                              |
+| Prop                | Type                                                            | Description                                                                                         |
+|---------------------|-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `fetchList`         | `(fetchInputMeta: FetchInputMeta<T>) => FetchOutputMeta<T>`     | Required. Function to fetch the list data.                                                          |
+| `isFocused`         | `boolean`                                                       | Optional. refresh watchging list if the screen is focused.                                          |
+| `unshiftData`       | `T[]`                                                           | Optional. If there is data you want to add in front of data. ex) for filter bar                     |
+| `initData`          | `T[]`                                                           | Optional. If you want to reduce fetch by utilizing cached data. ( Not recommended. )                |
+| `fetchCoolTime`     | number                                                          | Optional. Time to prevent the issue of quickly calling the API with the same params multiple times. |
+| `FlatListComponent` | `ComponentType<FlatListProps<T>>` `typeof Animated.FlatList<T>` | Optional. If you need animation processing using Animated.FlatList or Reanimated.FlatList           |
+| `LoadingComponent`  | `ReactNote`                                                     | Optional. Loading component.                                                                        |
 
 ## fetchList Props
 
