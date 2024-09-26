@@ -135,14 +135,17 @@ The base of this component is FlatList, so FlatListProps can be used, but the fo
 
 ### `FreshFlatListRef`
 
-
-
-| Method            | Parameter | Type                 | Description                                                                                                                                            |
-|-------------------|-----------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Method            | Parameter | Type                 | Description                                                                                                                                              |
+|-------------------|-----------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `reset`           | `index`   | `number` `undefined` | Resets the list to the initial state. If the index is given, the page containing the index is refreshed. If not, the current watching page is refreshed. |
-| `refreshWatching` | `void`    | `number`             | Refreshes the current page of the list.                                                                                                                |
-| `flatList`        |           |                      | This is the "flatList ref" inside the FreshFlatList.                                                                                                   |                                                                                                                                              |
+| `refreshWatching` | `void`    | `number`             | Refreshes the current page of the list.                                                                                                                  |
+| `flatList`        |           |                      | This is the "flatList ref" inside the FreshFlatList.                                                                                                     |                                                                                                                                              
+## Hooks
 
+| Hook                     | Description                                                                              |
+|--------------------------|------------------------------------------------------------------------------------------|
+| `usePageKeyMapper`       | If the API's next fetch information is id-based, this component can be used.             |
+| `useCacheInitData`       | A hook that can help if you want to save caching data and apply it to the initData prop. |
 
 ## Contributing
 
