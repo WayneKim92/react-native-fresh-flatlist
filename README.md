@@ -14,6 +14,10 @@ Do you need to update FlatList data frequently? Are people constantly complainin
 - [X] Reset by external request.
 - [X] refresh only the page currently being viewed or a specific page.
 - [X] Props that can utilize caching data
+- [ ] Check fetch ready ( This library is built on the premise that fetchList can be called at the same time as the first render, which creates the problem of not being able to wait for other APIs or wait for a specific state value to be ready. )
+
+## Bugs
+- infinite loading
 
 ## Installation
 
